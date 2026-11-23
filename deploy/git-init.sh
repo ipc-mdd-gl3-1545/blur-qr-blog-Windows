@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ===================================================================
 #  从 GitHub 拉取 Node 版并同步到 /opt/blog（只同步受版本控制的文件）
-#  仓库拆分后：源码在 blur-qr-blog-Windows/ 子目录，站点目录仍保持扁平的 /opt/blog
+#  本仓库是 Windows 单机版的独立仓库，clone 下来直接同步到 /opt/blog
 #  - 不会改动 .env（后台密码 / 会话密钥）
 #  - 不会改动 data/（文章数据库）和 uploads/（上传的图片）
 #  用法：sudo bash git-init.sh
@@ -10,7 +10,7 @@ set -eu
 export GIT_TERMINAL_PROMPT=0   # 需要凭据时直接报错，避免脚本卡在输入提示
 
 APP=/opt/blog
-REPO="https://github.com/ipc-mdd-gl3-1545/blur-qr-blog.git"
+REPO="https://github.com/ipc-mdd-gl3-1545/blur-qr-blog-Windows.git"
 BRANCH=main
 HOST_PROXY="192.168.5.3:7897"
 
@@ -94,12 +94,12 @@ fi
 git reset --hard "origin/$BRANCH"
 green "    当前版本：$(git log -1 --oneline)"
 
-blue "    同步 $SRC/blur-qr-blog-Windows/ → $APP（.env / data / uploads / videos 不动）"
+blue "    同步 $SRC/ → $APP（.env / data / uploads / videos 不动）"
 if command -v rsync >/dev/null 2>&1; then
   rsync -a --exclude '.git' --exclude '.env' --exclude 'data/' --exclude 'uploads/' --exclude 'videos/' \
-        "$SRC/blur-qr-blog-Windows/" "$APP/"
+        "$SRC/" "$APP/"
 else
-  tar -C "$SRC/blur-qr-blog-Windows" --exclude=.git --exclude=.env --exclude=data \
+  tar -C "$SRC" --exclude=.git --exclude=.env --exclude=data \
       --exclude=uploads --exclude=videos -cf - . | tar -C "$APP" -xf -
 fi
 chown -R blog:blog "$APP" 2>/dev/null || true
@@ -132,7 +132,7 @@ echo "  代码目录    $APP"
 echo "  当前版本    $(git log -1 --oneline)"
 echo "  数据与配置  .env / data/ / uploads/ 均未改动（已被 .gitignore 忽略）"
 echo
-echo "  以后更新：bash $0   （或 cd /opt/blog-src && git pull，再同步 blur-qr-blog-Windows/）"
+echo "  以后更新：bash $0   （或 cd /opt/blog-src && git pull，再同步到 $APP）"
 echo "  查看历史：cd /opt/blog-src && git log --oneline -10"
 echo "  回滚版本：cd /opt/blog-src && git fetch --tags && git reset --hard v1.0.0 && bash $0"
 echo
