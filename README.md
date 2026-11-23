@@ -93,19 +93,18 @@ npm start          # 等价于 node server.js，没有任何 npm 包要装
 <p align="center"><sub>♡ 一张图讲完，不绕弯子 ♡</sub></p>
 
 ```
-🌐 浏览器 · 访客 / 你自己
+浏览器 · 访客 / 你自己
     │  HTTP :8080
     ▼
-📦 server.js · Node.js 22（一个进程，零依赖）
+server.js · Node.js 22（一个进程，零依赖）
     ├─ 静态页面 · index / article / admin
     ├─ JSON API · 文章 / 弹幕 / 视频 / 统计
     ├─ 会话防护 · scrypt 哈希 + HMAC 签名
     └─ 日志指标 · gzip / 日志轮转 / healthz
          │
-         ├──▶ 🗄 SQLite · data/blog.db
-         │        文章 / 弹幕 / 访问量 / 错误记录（一个文件 = 全部数据）
-         ├──▶ 🖼 uploads/ + videos/    图片与视频原文件
-         └──▶ 💾 backups/              VACUUM INTO 生成的库快照
+         ├── SQLite · data/blog.db —— 文章/弹幕/访问量/错误，一个文件就是全部数据
+         ├── uploads/ + videos/   —— 图片与视频原文件
+         └── backups/             —— VACUUM INTO 生成的库快照
 ```
 
 <details open>
