@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>前端开发 · 学习路线与思维导图</title>
+<meta name="description" content="前端开发 学习路线与思维导图 —— 从 HTML/CSS/JavaScript 三剑客，到现代框架、工程化与性能优化，构建一套完整且扎实的前端知识体系。" />
+<link rel="stylesheet" href="assets/topic.css" />
+</head>
+<body>
+  <div class="bg-layer">
+    <video class="bg-video" autoplay muted loop playsinline poster="assets/poster.jpg">
+      <source src="assets/bg.mp4" type="video/mp4" />
+    </video>
+  </div>
+  <div class="bg-overlay"></div>
+
+  <!-- 顶部导航 -->
+  <nav class="topnav">
+    <a href="index.html" class="brand">
+      <span class="logo">✦</span>
+      <span>模糊二维码<small>FRONTEND NOTES</small></span>
+    </a>
+    <a href="index.html" class="back-home">
+      <svg viewBox="0 0 24 24"><path d="M12 6l-8 8 1.41 1.41L12 8.83l6.59 6.58L20 14l-8-8z"/></svg>
+      返回首页
+    </a>
+  </nav>
+
+  <!-- 页首 -->
+  <header class="hero">
+    <span class="hero-pill fade-up d1"><span style="width:7px;height:7px;border-radius:50%;background:var(--pink);display:inline-block;box-shadow:0 0 10px var(--pink)"></span> 学习路线 · 思维导图</span>
+    <div class="hero-emoji fade-up d2">💻</div>
+    <h1 class="fade-up d2">前端开发<span class="grad"> 学习地图</span></h1>
+    <p class="hero-desc fade-up d3">从 HTML/CSS/JavaScript 三剑客，到现代框架、工程化与性能优化，构建一套完整且扎实的前端知识体系。</p>
+    <div class="hero-chips fade-up d4">
+      <span class="chip">HTML / CSS</span>
+      <span class="chip">JavaScript</span>
+      <span class="chip">TypeScript</span>
+      <span class="chip">React / Vue</span>
+      <span class="chip">工程化</span>
+      <span class="chip">性能优化</span>
+    </div>
+  </header>
+
+  <!-- 学习路线 -->
+  <section class="wrap" id="roadmap">
+    <div class="section-head fade-up">
+      <span class="eyebrow">✦ Learning Path</span>
+      <h2 class="section-title">分阶段 <em>学习路线</em></h2>
+      <p class="section-desc">由浅入深，循序渐进。每个阶段给出核心知识点，按路线推进即可建立完整体系。</p>
+    </div>
+    <div class="roadmap">
+            <div class="stage" data-icon="1">
+        <div class="stage-dot">1</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第一阶段 · 基础三剑客</h3>
+            <span class="stage-tag">入门</span>
+            <span class="stage-duration">⏱ 1-2 个月</span>
+          </div>
+          <p>打好地基，理解 Web 运行本质。重点是语义化标签、盒模型、布局体系与 JS 核心语法。</p>
+          <div class="skill-list">
+        <span class="skill">HTML 语义化</span>
+        <span class="skill">CSS 盒模型</span>
+        <span class="skill">Flex / Grid 布局</span>
+        <span class="skill">JavaScript 基础</span>
+        <span class="skill">DOM 与事件</span>
+        <span class="skill">ES6+ 语法</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="2">
+        <div class="stage-dot">2</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第二阶段 · 现代框架</h3>
+            <span class="stage-tag">进阶</span>
+            <span class="stage-duration">⏱ 2-3 个月</span>
+          </div>
+          <p>掌握组件化思想与主流框架，理解响应式数据、虚拟 DOM 与状态管理。</p>
+          <div class="skill-list">
+        <span class="skill">React / Vue</span>
+        <span class="skill">组件化开发</span>
+        <span class="skill">状态管理</span>
+        <span class="skill">路由</span>
+        <span class="skill">TypeScript</span>
+        <span class="skill">Hooks / Composition API</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="3">
+        <div class="stage-dot">3</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第三阶段 · 工程化</h3>
+            <span class="stage-tag">必备</span>
+            <span class="stage-duration">⏱ 1-2 个月</span>
+          </div>
+          <p>从写代码到交付项目，掌握构建工具、规范体系与协作流程。</p>
+          <div class="skill-list">
+        <span class="skill">Vite / Webpack</span>
+        <span class="skill">包管理 npm/pnpm</span>
+        <span class="skill">Git 与协作</span>
+        <span class="skill">ESLint / Prettier</span>
+        <span class="skill">单元测试</span>
+        <span class="skill">CI/CD 基础</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="4">
+        <div class="stage-dot">4</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第四阶段 · 深入原理</h3>
+            <span class="stage-tag">高级</span>
+            <span class="stage-duration">⏱ 持续</span>
+          </div>
+          <p>深入浏览器与框架底层，形成可迁移的技术判断力。</p>
+          <div class="skill-list">
+        <span class="skill">浏览器渲染原理</span>
+        <span class="skill">事件循环</span>
+        <span class="skill">框架源码</span>
+        <span class="skill">性能优化</span>
+        <span class="skill">网络协议</span>
+        <span class="skill">手写轮子</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="5">
+        <div class="stage-dot">5</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第五阶段 · 拓展方向</h3>
+            <span class="stage-tag">拓展</span>
+            <span class="stage-duration">⏱ 按需</span>
+          </div>
+          <p>根据兴趣向纵深或横向发展，形成个人技术标签。</p>
+          <div class="skill-list">
+        <span class="skill">SSR / SSG</span>
+        <span class="skill">Node.js 全栈</span>
+        <span class="skill">跨端 / 小程序</span>
+        <span class="skill">可视化 / Canvas</span>
+        <span class="skill">WebGL</span>
+        <span class="skill">微前端</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 思维导图 -->
+  <section class="wrap" id="mindmap-section">
+    <div class="section-head fade-up">
+      <span class="eyebrow">✦ Mind Map</span>
+      <h2 class="section-title">知识 <em>思维导图</em></h2>
+      <p class="section-desc">一图看懂 前端开发 的知识脉络，点击节点可高亮查看分支。</p>
+    </div>
+    <div class="mindmap-box fade-up">
+      <div class="mindmap-toolbar">
+        <button class="mm-btn" id="zoomOut">－ 缩小</button>
+        <button class="mm-btn" id="zoomReset">重置</button>
+        <button class="mm-btn" id="zoomIn">＋ 放大</button>
+      </div>
+      <div class="mindmap-scroll"><svg id="mindmap"></svg></div>
+    </div>
+  </section>
+
+  <!-- 方向切换 -->
+  <section class="wrap">
+    <div class="section-head fade-up">
+      <span class="eyebrow">✦ Explore More</span>
+      <h2 class="section-title">探索 <em>其它方向</em></h2>
+    </div>
+    <div class="switcher fade-up">
+      <a href="frontend.html" class="switch-item active"><span class="si-icon">💻</span>前端开发</a>
+      <a href="backend.html" class="switch-item "><span class="si-icon">⚙️</span>后端开发</a>
+      <a href="sre.html" class="switch-item "><span class="si-icon">🛠️</span>SRE运维</a>
+      <a href="ai-agent.html" class="switch-item "><span class="si-icon">🤖</span>AI Agent</a>
+      <a href="database.html" class="switch-item "><span class="si-icon">🗄️</span>数据库</a>
+      <a href="network.html" class="switch-item "><span class="si-icon">🌐</span>计算机网络</a>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2026 模糊二维码 · 前端开发 学习地图 &nbsp;|&nbsp; Made with 💜</p>
+  </footer>
+
+  <script src="assets/mindmap.js"></script>
+  <script>
+    // 思维导图数据
+    const mindData = {"name": "前端开发", "children": [{"name": "HTML / CSS", "children": [{"name": "语义化标签"}, {"name": "盒模型"}, {"name": "Flex/Grid"}, {"name": "动画过渡"}]}, {"name": "JavaScript", "children": [{"name": "语法与类型"}, {"name": "DOM/BOM"}, {"name": "异步编程"}, {"name": "ES6+"}]}, {"name": "框架生态", "children": [{"name": "React"}, {"name": "Vue"}, {"name": "状态管理"}, {"name": "路由"}]}, {"name": "工程化", "children": [{"name": "Vite/Webpack"}, {"name": "npm/pnpm"}, {"name": "代码规范"}, {"name": "CI/CD"}]}, {"name": "底层原理", "children": [{"name": "渲染机制"}, {"name": "事件循环"}, {"name": "框架源码"}]}, {"name": "进阶方向", "children": [{"name": "性能优化"}, {"name": "SSR/SSG"}, {"name": "可视化"}, {"name": "跨端"}]}]};
+    const svg=document.getElementById('mindmap');
+    renderMindmap(svg,mindData);
+
+    // 缩放控制
+    let scale=1;
+    function applyZoom(){svg.style.transformOrigin='top center';svg.style.transform='scale('+scale+')'}
+    document.getElementById('zoomIn').onclick=()=>{scale=Math.min(1.6,scale+0.15);applyZoom()};
+    document.getElementById('zoomOut').onclick=()=>{scale=Math.max(0.5,scale-0.15);applyZoom()};
+    document.getElementById('zoomReset').onclick=()=>{scale=1;applyZoom()};
+
+    // 时间线滚动入场
+    const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+    document.querySelectorAll('.stage').forEach(s=>io.observe(s));
+  </script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>计算机网络 · 学习路线与思维导图</title>
+<meta name="description" content="计算机网络 学习路线与思维导图 —— 沿着数据包的旅程，从 OSI/TCP-IP 模型到 HTTP/HTTPS，从网络安全到性能调优，建立完整的网络知识体系。" />
+<link rel="stylesheet" href="assets/topic.css" />
+</head>
+<body>
+  <div class="bg-layer">
+    <video class="bg-video" autoplay muted loop playsinline poster="assets/poster.jpg">
+      <source src="assets/bg.mp4" type="video/mp4" />
+    </video>
+  </div>
+  <div class="bg-overlay"></div>
+
+  <!-- 顶部导航 -->
+  <nav class="topnav">
+    <a href="index.html" class="brand">
+      <span class="logo">✦</span>
+      <span>模糊二维码<small>COMPUTER NETWORK NOTES</small></span>
+    </a>
+    <a href="index.html" class="back-home">
+      <svg viewBox="0 0 24 24"><path d="M12 6l-8 8 1.41 1.41L12 8.83l6.59 6.58L20 14l-8-8z"/></svg>
+      返回首页
+    </a>
+  </nav>
+
+  <!-- 页首 -->
+  <header class="hero">
+    <span class="hero-pill fade-up d1"><span style="width:7px;height:7px;border-radius:50%;background:var(--pink);display:inline-block;box-shadow:0 0 10px var(--pink)"></span> 学习路线 · 思维导图</span>
+    <div class="hero-emoji fade-up d2">🌐</div>
+    <h1 class="fade-up d2">计算机网络<span class="grad"> 学习地图</span></h1>
+    <p class="hero-desc fade-up d3">沿着数据包的旅程，从 OSI/TCP-IP 模型到 HTTP/HTTPS，从网络安全到性能调优，建立完整的网络知识体系。</p>
+    <div class="hero-chips fade-up d4">
+      <span class="chip">TCP/IP</span>
+      <span class="chip">HTTP/HTTPS</span>
+      <span class="chip">DNS</span>
+      <span class="chip">网络安全</span>
+      <span class="chip">抓包分析</span>
+      <span class="chip">性能优化</span>
+    </div>
+  </header>
+
+  <!-- 学习路线 -->
+  <section class="wrap" id="roadmap">
+    <div class="section-head fade-up">
+      <span class="eyebrow">✦ Learning Path</span>
+      <h2 class="section-title">分阶段 <em>学习路线</em></h2>
+      <p class="section-desc">由浅入深，循序渐进。每个阶段给出核心知识点，按路线推进即可建立完整体系。</p>
+    </div>
+    <div class="roadmap">
+      <div class="stage" data-icon="1">
+        <div class="stage-dot">1</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第一阶段 · 网络基础模型</h3>
+            <span class="stage-tag">入门</span>
+            <span class="stage-duration">⏱ 1-2 个月</span>
+          </div>
+          <p>理解网络分层思想与各层职责，弄清数据如何封装与传输。</p>
+          <div class="skill-list">
+        <span class="skill">OSI 七层模型</span>
+        <span class="skill">TCP/IP 四层</span>
+        <span class="skill">IP 地址与子网</span>
+        <span class="skill">MAC 地址</span>
+        <span class="skill">ARP 协议</span>
+        <span class="skill">数据封装过程</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="2">
+        <div class="stage-dot">2</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第二阶段 · 核心协议</h3>
+            <span class="stage-tag">进阶</span>
+            <span class="stage-duration">⏱ 2 个月</span>
+          </div>
+          <p>吃透传输层与应用层关键协议，理解连接的建立与可靠性保障。</p>
+          <div class="skill-list">
+        <span class="skill">TCP 三次握手/四次挥手</span>
+        <span class="skill">UDP</span>
+        <span class="skill">流量控制</span>
+        <span class="skill">拥塞控制</span>
+        <span class="skill">DNS 解析</span>
+        <span class="skill">ICMP / NAT</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="3">
+        <div class="stage-dot">3</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第三阶段 · HTTP 与 Web</h3>
+            <span class="stage-tag">必备</span>
+            <span class="stage-duration">⏱ 1-2 个月</span>
+          </div>
+          <p>掌握 Web 通信细节，理解状态码、缓存机制与 HTTPS 加密原理。</p>
+          <div class="skill-list">
+        <span class="skill">HTTP 方法/状态码</span>
+        <span class="skill">请求响应报文</span>
+        <span class="skill">Cookie / Session</span>
+        <span class="skill">HTTP 缓存</span>
+        <span class="skill">HTTPS / TLS</span>
+        <span class="skill">HTTP2 / HTTP3</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="4">
+        <div class="stage-dot">4</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第四阶段 · 网络安全</h3>
+            <span class="stage-tag">高级</span>
+            <span class="stage-duration">⏱ 1-2 个月</span>
+          </div>
+          <p>了解常见攻击手段与防御机制，建立安全思维。</p>
+          <div class="skill-list">
+        <span class="skill">对称/非对称加密</span>
+        <span class="skill">数字证书</span>
+        <span class="skill">防火墙</span>
+        <span class="skill">VPN</span>
+        <span class="skill">常见 Web 攻击</span>
+        <span class="skill">DDoS 防护</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="5">
+        <div class="stage-dot">5</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第五阶段 · 实战与调优</h3>
+            <span class="stage-tag">实战</span>
+            <span class="stage-duration">⏱ 持续</span>
+          </div>
+          <p>学会用工具分析网络问题，从实操中深化理论理解。</p>
+          <div class="skill-list">
+        <span class="skill">Wireshark 抓包</span>
+        <span class="skill">tcpdump</span>
+        <span class="skill">网络编程 Socket</span>
+        <span class="skill">CDN 原理</span>
+        <span class="skill">延迟与吞吐优化</span>
+        <span class="skill">负载均衡</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 思维导图 -->
+  <section class="wrap" id="mindmap-section">
+    <div class="section-head fade-up">
+      <span class="eyebrow">✦ Mind Map</span>
+      <h2 class="section-title">知识 <em>思维导图</em></h2>
+      <p class="section-desc">一图看懂 计算机网络 的知识脉络，点击节点可高亮查看分支。</p>
+    </div>
+    <div class="mindmap-box fade-up">
+      <div class="mindmap-toolbar">
+        <button class="mm-btn" id="zoomOut">－ 缩小</button>
+        <button class="mm-btn" id="zoomReset">重置</button>
+        <button class="mm-btn" id="zoomIn">＋ 放大</button>
+      </div>
+      <div class="mindmap-scroll"><svg id="mindmap"></svg></div>
+    </div>
+  </section>
+
+  <!-- 方向切换 -->
+  <section class="wrap">
+    <div class="section-head fade-up">
+      <span class="eyebrow">✦ Explore More</span>
+      <h2 class="section-title">探索 <em>其它方向</em></h2>
+    </div>
+    <div class="switcher fade-up">
+      <a href="frontend.html" class="switch-item "><span class="si-icon">💻</span>前端开发</a>
+      <a href="backend.html" class="switch-item "><span class="si-icon">⚙️</span>后端开发</a>
+      <a href="sre.html" class="switch-item "><span class="si-icon">🛠️</span>SRE运维</a>
+      <a href="ai-agent.html" class="switch-item "><span class="si-icon">🤖</span>AI Agent</a>
+      <a href="database.html" class="switch-item "><span class="si-icon">🗄️</span>数据库</a>
+      <a href="network.html" class="switch-item active"><span class="si-icon">🌐</span>计算机网络</a>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2026 模糊二维码 · 计算机网络 学习地图 &nbsp;|&nbsp; Made with 💜</p>
+  </footer>
+
+  <script src="assets/mindmap.js"></script>
+  <script>
+    // 思维导图数据
+    const mindData = {"name": "计算机网络", "children": [{"name": "分层模型", "children": [{"name": "OSI 七层"}, {"name": "TCP/IP 四层"}, {"name": "数据封装"}, {"name": "各层设备"}]}, {"name": "网络层", "children": [{"name": "IP 协议"}, {"name": "子网划分"}, {"name": "路由选择"}, {"name": "ARP/NAT"}]}, {"name": "传输层", "children": [{"name": "TCP 三次握手"}, {"name": "四次挥手"}, {"name": "拥塞控制"}, {"name": "UDP"}]}, {"name": "应用层", "children": [{"name": "DNS"}, {"name": "HTTP/HTTPS"}, {"name": "FTP/邮件"}, {"name": "CDN"}]}, {"name": "网络安全", "children": [{"name": "TLS/SSL"}, {"name": "数字证书"}, {"name": "防火墙"}, {"name": "Web 攻击"}]}, {"name": "实战调优", "children": [{"name": "Wireshark"}, {"name": "Socket 编程"}, {"name": "性能分析"}, {"name": "负载均衡"}]}]};
+    const svg=document.getElementById('mindmap');
+    renderMindmap(svg,mindData);
+
+    // 缩放控制
+    let scale=1;
+    function applyZoom(){svg.style.transformOrigin='top center';svg.style.transform='scale('+scale+')'}
+    document.getElementById('zoomIn').onclick=()=>{scale=Math.min(1.6,scale+0.15);applyZoom()};
+    document.getElementById('zoomOut').onclick=()=>{scale=Math.max(0.5,scale-0.15);applyZoom()};
+    document.getElementById('zoomReset').onclick=()=>{scale=1;applyZoom()};
+
+    // 时间线滚动入场
+    const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+    document.querySelectorAll('.stage').forEach(s=>io.observe(s));
+  </script>
+</body>
+</html>

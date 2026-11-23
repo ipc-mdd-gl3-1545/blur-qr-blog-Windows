@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SRE运维 · 学习路线与思维导图</title>
+<meta name="description" content="SRE运维 学习路线与思维导图 —— 以可靠性为核心，覆盖 Linux、网络、容器编排、可观测性与故障治理，走向稳定性工程实践。" />
+<link rel="stylesheet" href="assets/topic.css" />
+</head>
+<body>
+  <div class="bg-layer">
+    <video class="bg-video" autoplay muted loop playsinline poster="assets/poster.jpg">
+      <source src="assets/bg.mp4" type="video/mp4" />
+    </video>
+  </div>
+  <div class="bg-overlay"></div>
+
+  <!-- 顶部导航 -->
+  <nav class="topnav">
+    <a href="index.html" class="brand">
+      <span class="logo">✦</span>
+      <span>模糊二维码<small>SRE / DEVOPS NOTES</small></span>
+    </a>
+    <a href="index.html" class="back-home">
+      <svg viewBox="0 0 24 24"><path d="M12 6l-8 8 1.41 1.41L12 8.83l6.59 6.58L20 14l-8-8z"/></svg>
+      返回首页
+    </a>
+  </nav>
+
+  <!-- 页首 -->
+  <header class="hero">
+    <span class="hero-pill fade-up d1"><span style="width:7px;height:7px;border-radius:50%;background:var(--pink);display:inline-block;box-shadow:0 0 10px var(--pink)"></span> 学习路线 · 思维导图</span>
+    <div class="hero-emoji fade-up d2">🛠️</div>
+    <h1 class="fade-up d2">SRE运维<span class="grad"> 学习地图</span></h1>
+    <p class="hero-desc fade-up d3">以可靠性为核心，覆盖 Linux、网络、容器编排、可观测性与故障治理，走向稳定性工程实践。</p>
+    <div class="hero-chips fade-up d4">
+      <span class="chip">Linux</span>
+      <span class="chip">网络</span>
+      <span class="chip">Docker / K8s</span>
+      <span class="chip">监控告警</span>
+      <span class="chip">CI/CD</span>
+      <span class="chip">稳定性</span>
+    </div>
+  </header>
+
+  <!-- 学习路线 -->
+  <section class="wrap" id="roadmap">
+    <div class="section-head fade-up">
+      <span class="eyebrow">✦ Learning Path</span>
+      <h2 class="section-title">分阶段 <em>学习路线</em></h2>
+      <p class="section-desc">由浅入深，循序渐进。每个阶段给出核心知识点，按路线推进即可建立完整体系。</p>
+    </div>
+    <div class="roadmap">
+            <div class="stage" data-icon="1">
+        <div class="stage-dot">1</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第一阶段 · 系统基础</h3>
+            <span class="stage-tag">入门</span>
+            <span class="stage-duration">⏱ 1-2 个月</span>
+          </div>
+          <p>扎实的 Linux 与网络功底是运维的根基，学会用脚本自动化重复工作。</p>
+          <div class="skill-list">
+        <span class="skill">Linux 常用命令</span>
+        <span class="skill">Shell 脚本</span>
+        <span class="skill">TCP/IP 网络</span>
+        <span class="skill">DNS / HTTP</span>
+        <span class="skill">进程与资源</span>
+        <span class="skill">Vim / Git</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="2">
+        <div class="stage-dot">2</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第二阶段 · 服务与部署</h3>
+            <span class="stage-tag">进阶</span>
+            <span class="stage-duration">⏱ 2 个月</span>
+          </div>
+          <p>掌握常见服务搭建与自动化部署流程，理解配置管理与持续交付。</p>
+          <div class="skill-list">
+        <span class="skill">Nginx</span>
+        <span class="skill">Ansible</span>
+        <span class="skill">Jenkins / GitLab CI</span>
+        <span class="skill">灰度发布</span>
+        <span class="skill">负载均衡</span>
+        <span class="skill">日志管理</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="3">
+        <div class="stage-dot">3</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第三阶段 · 容器与编排</h3>
+            <span class="stage-tag">必备</span>
+            <span class="stage-duration">⏱ 2-3 个月</span>
+          </div>
+          <p>云原生核心能力，从镜像构建到大规模集群编排与治理。</p>
+          <div class="skill-list">
+        <span class="skill">Docker</span>
+        <span class="skill">Kubernetes</span>
+        <span class="skill">Helm</span>
+        <span class="skill">Service Mesh</span>
+        <span class="skill">Operator</span>
+        <span class="skill">K8s 调度原理</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="4">
+        <div class="stage-dot">4</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第四阶段 · 可观测性</h3>
+            <span class="stage-tag">高级</span>
+            <span class="stage-duration">⏱ 2 个月</span>
+          </div>
+          <p>建立指标、日志、链路三位一体的观测体系，做到问题可发现、可定位。</p>
+          <div class="skill-list">
+        <span class="skill">Prometheus</span>
+        <span class="skill">Grafana</span>
+        <span class="skill">ELK / Loki</span>
+        <span class="skill">链路追踪</span>
+        <span class="skill">告警治理</span>
+        <span class="skill">SLO / SLI</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="5">
+        <div class="stage-dot">5</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第五阶段 · 稳定性建设</h3>
+            <span class="stage-tag">架构</span>
+            <span class="stage-duration">⏱ 持续</span>
+          </div>
+          <p>从救火到防火，用工程手段系统性提升服务可靠性。</p>
+          <div class="skill-list">
+        <span class="skill">故障排查</span>
+        <span class="skill">混沌工程</span>
+        <span class="skill">容量规划</span>
+        <span class="skill">应急预案</span>
+        <span class="skill">根因分析 RCA</span>
+        <span class="skill">FinOps 成本优化</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 思维导图 -->
+  <section class="wrap" id="mindmap-section">
+    <div class="section-head fade-up">
+      <span class="eyebrow">✦ Mind Map</span>
+      <h2 class="section-title">知识 <em>思维导图</em></h2>
+      <p class="section-desc">一图看懂 SRE运维 的知识脉络，点击节点可高亮查看分支。</p>
+    </div>
+    <div class="mindmap-box fade-up">
+      <div class="mindmap-toolbar">
+        <button class="mm-btn" id="zoomOut">－ 缩小</button>
+        <button class="mm-btn" id="zoomReset">重置</button>
+        <button class="mm-btn" id="zoomIn">＋ 放大</button>
+      </div>
+      <div class="mindmap-scroll"><svg id="mindmap"></svg></div>
+    </div>
+  </section>
+
+  <!-- 方向切换 -->
+  <section class="wrap">
+    <div class="section-head fade-up">
+      <span class="eyebrow">✦ Explore More</span>
+      <h2 class="section-title">探索 <em>其它方向</em></h2>
+    </div>
+    <div class="switcher fade-up">
+      <a href="frontend.html" class="switch-item "><span class="si-icon">💻</span>前端开发</a>
+      <a href="backend.html" class="switch-item "><span class="si-icon">⚙️</span>后端开发</a>
+      <a href="sre.html" class="switch-item active"><span class="si-icon">🛠️</span>SRE运维</a>
+      <a href="ai-agent.html" class="switch-item "><span class="si-icon">🤖</span>AI Agent</a>
+      <a href="database.html" class="switch-item "><span class="si-icon">🗄️</span>数据库</a>
+      <a href="network.html" class="switch-item "><span class="si-icon">🌐</span>计算机网络</a>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2026 模糊二维码 · SRE运维 学习地图 &nbsp;|&nbsp; Made with 💜</p>
+  </footer>
+
+  <script src="assets/mindmap.js"></script>
+  <script>
+    // 思维导图数据
+    const mindData = {"name": "SRE 运维", "children": [{"name": "系统基础", "children": [{"name": "Linux"}, {"name": "Shell 脚本"}, {"name": "网络协议"}, {"name": "资源管理"}]}, {"name": "容器编排", "children": [{"name": "Docker"}, {"name": "Kubernetes"}, {"name": "Helm"}, {"name": "Service Mesh"}]}, {"name": "可观测性", "children": [{"name": "Prometheus"}, {"name": "Grafana"}, {"name": "日志 ELK"}, {"name": "链路追踪"}]}, {"name": "持续交付", "children": [{"name": "CI/CD"}, {"name": "灰度发布"}, {"name": "Ansible"}, {"name": "GitOps"}]}, {"name": "稳定性", "children": [{"name": "SLO/SLI"}, {"name": "故障治理"}, {"name": "混沌工程"}, {"name": "应急预案"}]}, {"name": "云原生", "children": [{"name": "服务网格"}, {"name": "Serverless"}, {"name": "多集群"}, {"name": "成本优化"}]}]};
+    const svg=document.getElementById('mindmap');
+    renderMindmap(svg,mindData);
+
+    // 缩放控制
+    let scale=1;
+    function applyZoom(){svg.style.transformOrigin='top center';svg.style.transform='scale('+scale+')'}
+    document.getElementById('zoomIn').onclick=()=>{scale=Math.min(1.6,scale+0.15);applyZoom()};
+    document.getElementById('zoomOut').onclick=()=>{scale=Math.max(0.5,scale-0.15);applyZoom()};
+    document.getElementById('zoomReset').onclick=()=>{scale=1;applyZoom()};
+
+    // 时间线滚动入场
+    const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+    document.querySelectorAll('.stage').forEach(s=>io.observe(s));
+  </script>
+</body>
+</html>

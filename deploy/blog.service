@@ -1,0 +1,46 @@
+[Unit]
+Description=模糊二维码 · 博客后端
+Documentation=https://github.com/ipc-mdd-gl3-1545
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=blog
+Group=blog
+WorkingDirectory=/opt/blog
+EnvironmentFile=/opt/blog/.env
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+TimeoutStopSec=15
+KillSignal=SIGTERM
+
+# ---- 安全加固 ----
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+LockPersonality=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+# videos 必须列进来：ProtectSystem=strict 会把其余路径全挂成只读，
+# 漏掉它会导致后台上传视频报 EROFS（服务能读不能写）
+ReadWritePaths=/opt/blog/data /opt/blog/uploads /opt/blog/videos
+
+# ---- 资源限制（防单进程吃满）----
+LimitNOFILE=65535
+MemoryMax=512M
+
+# ---- 日志（journalctl -u blog -f 查看）----
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=blog
+
+[Install]
+WantedBy=multi-user.target

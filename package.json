@@ -1,0 +1,16 @@
+{
+  "name": "blur-qr-blog",
+  "version": "2.1.0",
+  "private": true,
+  "description": "模糊二维码博客：Node.js 22 单机版（内置 SQLite，零第三方依赖），含静态页面与可视化管理后台",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "password": "node tools/hash-password.js",
+    "backup": "node tools/backup.js",
+    "clean": "node tools/clean-uploads.js"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  }
+}

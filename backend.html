@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>后端开发 · 学习路线与思维导图</title>
+<meta name="description" content="后端开发 学习路线与思维导图 —— 从一门服务端语言出发，深入数据库、缓存、消息队列与分布式架构，打造高可用的后端系统能力。" />
+<link rel="stylesheet" href="assets/topic.css" />
+</head>
+<body>
+  <div class="bg-layer">
+    <video class="bg-video" autoplay muted loop playsinline poster="assets/poster.jpg">
+      <source src="assets/bg.mp4" type="video/mp4" />
+    </video>
+  </div>
+  <div class="bg-overlay"></div>
+
+  <!-- 顶部导航 -->
+  <nav class="topnav">
+    <a href="index.html" class="brand">
+      <span class="logo">✦</span>
+      <span>模糊二维码<small>BACKEND NOTES</small></span>
+    </a>
+    <a href="index.html" class="back-home">
+      <svg viewBox="0 0 24 24"><path d="M12 6l-8 8 1.41 1.41L12 8.83l6.59 6.58L20 14l-8-8z"/></svg>
+      返回首页
+    </a>
+  </nav>
+
+  <!-- 页首 -->
+  <header class="hero">
+    <span class="hero-pill fade-up d1"><span style="width:7px;height:7px;border-radius:50%;background:var(--pink);display:inline-block;box-shadow:0 0 10px var(--pink)"></span> 学习路线 · 思维导图</span>
+    <div class="hero-emoji fade-up d2">⚙️</div>
+    <h1 class="fade-up d2">后端开发<span class="grad"> 学习地图</span></h1>
+    <p class="hero-desc fade-up d3">从一门服务端语言出发，深入数据库、缓存、消息队列与分布式架构，打造高可用的后端系统能力。</p>
+    <div class="hero-chips fade-up d4">
+      <span class="chip">Java / Go</span>
+      <span class="chip">数据库</span>
+      <span class="chip">Redis</span>
+      <span class="chip">消息队列</span>
+      <span class="chip">微服务</span>
+      <span class="chip">分布式</span>
+    </div>
+  </header>
+
+  <!-- 学习路线 -->
+  <section class="wrap" id="roadmap">
+    <div class="section-head fade-up">
+      <span class="eyebrow">✦ Learning Path</span>
+      <h2 class="section-title">分阶段 <em>学习路线</em></h2>
+      <p class="section-desc">由浅入深，循序渐进。每个阶段给出核心知识点，按路线推进即可建立完整体系。</p>
+    </div>
+    <div class="roadmap">
+            <div class="stage" data-icon="1">
+        <div class="stage-dot">1</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第一阶段 · 语言与基础</h3>
+            <span class="stage-tag">入门</span>
+            <span class="stage-duration">⏱ 2 个月</span>
+          </div>
+          <p>选择一门主力语言（Java/Go/Python），吃透语法、数据结构与面向对象思想。</p>
+          <div class="skill-list">
+        <span class="skill">Java / Go 基础</span>
+        <span class="skill">数据结构与算法</span>
+        <span class="skill">面向对象</span>
+        <span class="skill">并发基础</span>
+        <span class="skill">Linux 基础</span>
+        <span class="skill">Git</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="2">
+        <div class="stage-dot">2</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第二阶段 · 数据与存储</h3>
+            <span class="stage-tag">进阶</span>
+            <span class="stage-duration">⏱ 2 个月</span>
+          </div>
+          <p>理解关系型数据库原理与 SQL，学会用缓存提升系统性能。</p>
+          <div class="skill-list">
+        <span class="skill">MySQL</span>
+        <span class="skill">SQL 与索引</span>
+        <span class="skill">事务与锁</span>
+        <span class="skill">Redis</span>
+        <span class="skill">数据建模</span>
+        <span class="skill">慢查询优化</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="3">
+        <div class="stage-dot">3</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第三阶段 · 框架与开发</h3>
+            <span class="stage-tag">必备</span>
+            <span class="stage-duration">⏱ 2 个月</span>
+          </div>
+          <p>熟练使用主流框架，理解 MVC、依赖注入与接口设计规范。</p>
+          <div class="skill-list">
+        <span class="skill">Spring Boot / Gin</span>
+        <span class="skill">RESTful API</span>
+        <span class="skill">ORM 框架</span>
+        <span class="skill">认证鉴权</span>
+        <span class="skill">接口文档</span>
+        <span class="skill">参数校验</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="4">
+        <div class="stage-dot">4</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第四阶段 · 中间件</h3>
+            <span class="stage-tag">高级</span>
+            <span class="stage-duration">⏱ 2-3 个月</span>
+          </div>
+          <p>掌握解耦、削峰与异步能力，理解高并发场景下的组件协作。</p>
+          <div class="skill-list">
+        <span class="skill">消息队列 Kafka/RabbitMQ</span>
+        <span class="skill">分布式锁</span>
+        <span class="skill">搜索引擎 ES</span>
+        <span class="skill">分库分表</span>
+        <span class="skill">CDN</span>
+        <span class="skill">对象存储</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage" data-icon="5">
+        <div class="stage-dot">5</div>
+        <div class="stage-card">
+          <div class="stage-head">
+            <h3>第五阶段 · 架构与分布式</h3>
+            <span class="stage-tag">架构</span>
+            <span class="stage-duration">⏱ 持续</span>
+          </div>
+          <p>建立系统设计能力，理解微服务治理与稳定性保障。</p>
+          <div class="skill-list">
+        <span class="skill">微服务 / Spring Cloud</span>
+        <span class="skill">服务注册发现</span>
+        <span class="skill">负载均衡</span>
+        <span class="skill">分布式事务</span>
+        <span class="skill">限流熔断</span>
+        <span class="skill">容器化部署</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 思维导图 -->
+  <section class="wrap" id="mindmap-section">
+    <div class="section-head fade-up">
+      <span class="eyebrow">✦ Mind Map</span>
+      <h2 class="section-title">知识 <em>思维导图</em></h2>
+      <p class="section-desc">一图看懂 后端开发 的知识脉络，点击节点可高亮查看分支。</p>
+    </div>
+    <div class="mindmap-box fade-up">
+      <div class="mindmap-toolbar">
+        <button class="mm-btn" id="zoomOut">－ 缩小</button>
+        <button class="mm-btn" id="zoomReset">重置</button>
+        <button class="mm-btn" id="zoomIn">＋ 放大</button>
+      </div>
+      <div class="mindmap-scroll"><svg id="mindmap"></svg></div>
+    </div>
+  </section>
+
+  <!-- 方向切换 -->
+  <section class="wrap">
+    <div class="section-head fade-up">
+      <span class="eyebrow">✦ Explore More</span>
+      <h2 class="section-title">探索 <em>其它方向</em></h2>
+    </div>
+    <div class="switcher fade-up">
+      <a href="frontend.html" class="switch-item "><span class="si-icon">💻</span>前端开发</a>
+      <a href="backend.html" class="switch-item active"><span class="si-icon">⚙️</span>后端开发</a>
+      <a href="sre.html" class="switch-item "><span class="si-icon">🛠️</span>SRE运维</a>
+      <a href="ai-agent.html" class="switch-item "><span class="si-icon">🤖</span>AI Agent</a>
+      <a href="database.html" class="switch-item "><span class="si-icon">🗄️</span>数据库</a>
+      <a href="network.html" class="switch-item "><span class="si-icon">🌐</span>计算机网络</a>
+    </div>
+  </section>
+
+  <footer>
+    <p>© 2026 模糊二维码 · 后端开发 学习地图 &nbsp;|&nbsp; Made with 💜</p>
+  </footer>
+
+  <script src="assets/mindmap.js"></script>
+  <script>
+    // 思维导图数据
+    const mindData = {"name": "后端开发", "children": [{"name": "编程语言", "children": [{"name": "Java"}, {"name": "Go"}, {"name": "Python"}, {"name": "并发模型"}]}, {"name": "数据库", "children": [{"name": "MySQL"}, {"name": "索引/事务"}, {"name": "Redis"}, {"name": "分库分表"}]}, {"name": "框架开发", "children": [{"name": "Spring Boot"}, {"name": "RESTful"}, {"name": "ORM"}, {"name": "鉴权"}]}, {"name": "中间件", "children": [{"name": "消息队列"}, {"name": "Elasticsearch"}, {"name": "分布式锁"}, {"name": "CDN"}]}, {"name": "微服务架构", "children": [{"name": "服务治理"}, {"name": "注册发现"}, {"name": "分布式事务"}, {"name": "限流熔断"}]}, {"name": "系统设计", "children": [{"name": "高并发"}, {"name": "高可用"}, {"name": "可扩展"}, {"name": "容量规划"}]}]};
+    const svg=document.getElementById('mindmap');
+    renderMindmap(svg,mindData);
+
+    // 缩放控制
+    let scale=1;
+    function applyZoom(){svg.style.transformOrigin='top center';svg.style.transform='scale('+scale+')'}
+    document.getElementById('zoomIn').onclick=()=>{scale=Math.min(1.6,scale+0.15);applyZoom()};
+    document.getElementById('zoomOut').onclick=()=>{scale=Math.max(0.5,scale-0.15);applyZoom()};
+    document.getElementById('zoomReset').onclick=()=>{scale=1;applyZoom()};
+
+    // 时间线滚动入场
+    const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});
+    document.querySelectorAll('.stage').forEach(s=>io.observe(s));
+  </script>
+</body>
+</html>

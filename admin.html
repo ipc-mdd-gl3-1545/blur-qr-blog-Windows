@@ -1,0 +1,3779 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>管理后台 · 模糊二维码</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%E2%9C%A6%3C/text%3E%3C/svg%3E" />
+<style>
+  :root{
+    --violet:#a78bfa; --pink:#f0a6d0; --ink:#f4ecff; --dim:#a99cc4;
+    --line:rgba(255,255,255,.1); --line2:rgba(255,255,255,.18);
+    --card:rgba(255,255,255,.055); --card2:rgba(255,255,255,.1);
+    --side:#1c1130; --radius:16px;
+    --sans:"PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;font-family:var(--sans);color:var(--ink);
+    background:#170e26;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  button,input,textarea,select{font-family:inherit}
+  ::selection{background:rgba(167,139,250,.4)}
+  img{display:block}
+
+  /* ---------- 登录 ---------- */
+  #loginView{display:none;min-height:100vh;place-items:center;padding:24px;
+    background:radial-gradient(900px 600px at 15% 0%,#4b2f74 0%,transparent 62%),
+               radial-gradient(800px 600px at 90% 10%,#7d3f6a 0%,transparent 58%),
+               linear-gradient(160deg,#241436,#1b1029 60%,#150c22)}
+  #loginView.show{display:grid}
+  .login-card{width:min(400px,100%);padding:36px 32px;border-radius:22px;
+    background:rgba(255,255,255,.07);border:1px solid var(--line2);
+    backdrop-filter:blur(20px);box-shadow:0 26px 70px rgba(8,3,18,.55);text-align:center}
+  .login-card .ico{font-size:36px;margin-bottom:10px}
+  .login-card h1{font-size:22px;margin:0 0 6px}
+  .login-card p{font-size:12.5px;color:var(--dim);margin:0 0 24px;line-height:1.8}
+  .login-card input{width:100%;padding:13px 15px;border-radius:11px;border:1px solid var(--line2);
+    background:rgba(255,255,255,.07);color:#fff;font-size:15px;outline:none;transition:.2s}
+  .login-card input:focus{border-color:var(--violet);background:rgba(255,255,255,.12)}
+  .login-card button{width:100%;margin-top:14px;padding:13px;border-radius:11px;border:none;
+    background:linear-gradient(135deg,var(--violet),var(--pink));color:#2a1640;
+    font-size:15px;font-weight:700;cursor:pointer;transition:.2s}
+  .login-card button:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(167,139,250,.35)}
+  .hint{margin-top:18px;font-size:11px;color:var(--dim);line-height:1.8;opacity:.85}
+
+  /* ---------- 告警条（磁盘只读/写不进去时用） ---------- */
+  .warnbox{display:flex;gap:10px;align-items:flex-start;margin:0 0 14px;padding:12px 15px;
+    border-radius:12px;font-size:12.5px;line-height:1.7;color:#ffd7d7;
+    background:rgba(255,92,92,.12);border:1px solid rgba(255,92,92,.36)}
+  .warnbox b{display:block;margin-bottom:3px;color:#ffb3b3;font-size:12.5px}
+  .warnbox code{font-size:11.5px;padding:1px 5px;border-radius:5px;
+    background:rgba(0,0,0,.28);color:#ffd7d7}
+
+  /* ---------- 布局 ---------- */
+  #app{display:none}
+  #app.show{display:grid;grid-template-columns:230px 1fr;min-height:100vh}
+
+  .side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;
+    padding:20px 14px;background:var(--side);border-right:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:10px;padding:0 8px 20px;font-size:15px;font-weight:700;letter-spacing:.03em}
+  .brand .mark{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;
+    background:linear-gradient(135deg,var(--violet),var(--pink));color:#fff;font-size:16px;
+    box-shadow:0 6px 16px rgba(167,139,250,.32)}
+  .brand small{display:block;font-size:10px;font-weight:500;opacity:.55;letter-spacing:.12em;margin-top:1px}
+
+  .nav{display:flex;flex-direction:column;gap:4px}
+  .nav button{display:flex;align-items:center;gap:10px;width:100%;padding:11px 12px;border-radius:11px;
+    border:none;background:transparent;color:var(--dim);font-size:13.5px;font-weight:600;
+    cursor:pointer;text-align:left;transition:.16s}
+  .nav button:hover{background:rgba(255,255,255,.06);color:var(--ink)}
+  .nav button.on{background:rgba(167,139,250,.18);color:var(--ink);box-shadow:inset 0 0 0 1px rgba(167,139,250,.32)}
+  .nav button .ic{width:18px;text-align:center;font-size:14px}
+  .nav button .cnt{margin-left:auto;font-size:11px;opacity:.65;font-variant-numeric:tabular-nums}
+
+  .side-foot{margin-top:auto;display:flex;flex-direction:column;gap:7px;padding-top:16px;border-top:1px solid var(--line)}
+  .side-foot a,.side-foot button{padding:9px 12px;border-radius:10px;border:1px solid var(--line);
+    background:rgba(255,255,255,.05);color:var(--dim);font-size:12.5px;font-weight:600;
+    cursor:pointer;text-align:left;transition:.16s}
+  .side-foot a:hover,.side-foot button:hover{background:rgba(255,255,255,.1);color:var(--ink)}
+
+  .main{min-width:0;max-width:1320px;width:100%;margin:0 auto;
+    padding:26px clamp(20px,3.4vw,44px) 70px}
+  .topbar{display:flex;align-items:center;gap:14px;margin-bottom:24px;flex-wrap:wrap}
+  .topbar h1{font-size:22px;margin:0;font-weight:700;letter-spacing:.01em}
+  .topbar .desc{font-size:12.5px;color:var(--dim)}
+  .top-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  .tbtn{padding:9px 14px;border-radius:10px;border:1px solid var(--line2);background:rgba(255,255,255,.05);
+    color:var(--ink);font-size:12.5px;font-weight:600;cursor:pointer;transition:.16s}
+  .tbtn:hover{background:rgba(255,255,255,.12)}
+  .tbtn.primary{background:linear-gradient(135deg,var(--violet),var(--pink));border:none;color:#2a1640}
+  .tbtn.primary:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(167,139,250,.32)}
+
+  .view{display:none}
+  .view.on{display:block;animation:fade .22s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+  /* ---------- 概览 ---------- */
+  .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:12px;margin-bottom:22px}
+  .card{padding:15px 16px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+  .card .k{display:block;font-size:11.5px;color:var(--dim);margin-bottom:7px}
+  .card b{font-size:22px;font-weight:700;letter-spacing:.01em;font-variant-numeric:tabular-nums}
+  .card em{display:block;font-style:normal;font-size:11px;color:var(--dim);margin-top:3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+  .panel + .panel{margin-top:16px}
+  .panel-head{display:flex;align-items:center;gap:9px;padding:14px 18px;border-bottom:1px solid var(--line);
+    font-size:13.5px;font-weight:700}
+  .panel-head .sp{margin-left:auto;font-size:12px;font-weight:500;color:var(--dim)}
+  .panel-body{padding:16px 18px}
+
+  .quick{display:flex;gap:10px;flex-wrap:wrap}
+  .quick button,.quicklink{flex:1 1 150px;padding:15px 14px;border-radius:12px;border:1px dashed var(--line2);
+    background:rgba(255,255,255,.035);color:var(--ink);font-size:13px;font-weight:600;
+    cursor:pointer;transition:.16s;text-align:center}
+  .quick button:hover,.quicklink:hover{background:rgba(167,139,250,.14);border-color:rgba(167,139,250,.5)}
+
+  .recent{display:flex;flex-direction:column}
+  .recent .ri{display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .recent .ri:last-child{border-bottom:none}
+  .recent .ri .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .recent .ri .d{font-size:11.5px;color:var(--dim);white-space:nowrap}
+
+  /* ---------- 文章 ---------- */
+  .two{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+  @media(max-width:1000px){.two{grid-template-columns:1fr}}
+  .search{width:100%;padding:10px 13px;border-radius:10px;border:1px solid var(--line);
+    background:rgba(255,255,255,.05);color:#fff;font-size:12.5px;outline:none;transition:.16s}
+  .search:focus{border-color:var(--violet);background:rgba(255,255,255,.1)}
+
+  .alist{max-height:560px;overflow:auto;padding:10px}
+  .aitem{padding:12px 12px;border-radius:11px;border:1px solid transparent;cursor:pointer;
+    transition:.16s;margin-bottom:6px;background:rgba(255,255,255,.035)}
+  .aitem:hover{background:rgba(255,255,255,.08)}
+  .aitem.active{border-color:rgba(167,139,250,.55);background:rgba(167,139,250,.16)}
+  .aitem h4{margin:0 0 5px;font-size:13.5px;font-weight:600;line-height:1.5}
+  .aitem .m{font-size:11px;color:var(--dim);display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+  .chip{padding:2px 8px;border-radius:999px;background:rgba(167,139,250,.24);font-size:10px}
+  .chip.draft{background:rgba(255,180,120,.26);color:#ffdcb8}
+  .empty{padding:40px 16px;text-align:center;font-size:13px;color:var(--dim);line-height:1.9}
+  .loading{padding:40px;text-align:center;font-size:13px;color:var(--dim)}
+
+  .editor{padding:22px}
+  .field{margin-bottom:18px}
+  .field label{display:block;font-size:12px;font-weight:600;margin-bottom:8px;color:var(--dim);letter-spacing:.03em}
+  .field input[type=text],.field textarea{width:100%;padding:12px 14px;border-radius:11px;
+    border:1px solid var(--line);background:rgba(255,255,255,.05);color:#fff;
+    font-size:14px;outline:none;transition:.16s;line-height:1.8}
+  .field input[type=text]:focus,.field textarea:focus{border-color:var(--violet);background:rgba(255,255,255,.1)}
+  .field textarea{min-height:300px;resize:vertical;font-size:13.5px}
+  .field .tip{font-size:11px;color:var(--dim);margin-top:6px;line-height:1.7}
+
+  .cover-row{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+  .cover-prev{width:160px;height:106px;border-radius:11px;border:1px dashed var(--line2);
+    display:grid;place-items:center;overflow:hidden;background:rgba(0,0,0,.2);
+    font-size:11.5px;color:var(--dim);flex-shrink:0}
+  .cover-prev img{width:100%;height:100%;object-fit:contain;background:rgba(0,0,0,.25)}
+  .upload-btns{display:flex;gap:8px;flex-wrap:wrap;align-content:flex-start}
+  .ubtn{padding:9px 14px;border-radius:10px;border:1px solid var(--line2);
+    background:rgba(255,255,255,.05);color:var(--ink);font-size:12.5px;font-weight:600;cursor:pointer;transition:.16s}
+  .ubtn:hover{background:rgba(255,255,255,.12)}
+  .ubtn.danger{background:rgba(255,120,150,.16);border-color:rgba(255,120,150,.32);color:#ffc9d8}
+
+  .editor-actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center;
+    padding-top:18px;border-top:1px solid var(--line);margin-top:20px}
+  .save{padding:12px 26px;border-radius:11px;border:none;
+    background:linear-gradient(135deg,var(--violet),var(--pink));color:#2a1640;
+    font-size:13.5px;font-weight:700;cursor:pointer;transition:.16s}
+  .save:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(167,139,250,.35)}
+  .del{padding:12px 18px;border-radius:11px;border:1px solid rgba(255,120,150,.36);
+    background:rgba(255,120,150,.12);color:#ffc9d8;font-size:12.5px;font-weight:600;cursor:pointer;transition:.16s}
+  .del:hover{background:rgba(255,120,150,.22)}
+  .del:disabled{opacity:.35;cursor:not-allowed}
+  .mode-tag{font-size:11.5px;color:var(--dim);margin-left:auto}
+
+  /* ---------- 视频 ---------- */
+  .vid-drop{border:1.5px dashed var(--line2);border-radius:13px;padding:22px;text-align:center;
+    color:var(--dim);font-size:12.5px;line-height:1.9;transition:.16s;margin-bottom:14px}
+  .vid-drop.on{border-color:var(--violet);background:rgba(167,139,250,.12);color:var(--ink)}
+  .vid-drop b{color:var(--ink)}
+  .vid-tools{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .vid-tools .dir{font-size:11.5px;color:var(--dim);word-break:break-all;margin-left:auto}
+
+  .vrow{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:11px;
+    background:rgba(255,255,255,.035);margin-bottom:6px}
+  .vrow:hover{background:rgba(255,255,255,.07)}
+  .vrow .no{width:22px;font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums;flex-shrink:0}
+  .vrow .nm{flex:1;min-width:0;font-size:13px;line-height:1.5;word-break:break-all}
+  .vrow .mt{font-size:11.5px;color:var(--dim);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .vrow .acts{display:flex;gap:6px;flex-shrink:0}
+  .mini{padding:6px 11px;border-radius:9px;border:1px solid var(--line2);background:rgba(255,255,255,.05);
+    color:var(--ink);font-size:11.5px;font-weight:600;cursor:pointer;transition:.16s}
+  .mini:hover{background:rgba(255,255,255,.14)}
+  .mini.danger{background:rgba(255,120,150,.14);color:#ffc9d8;border-color:rgba(255,120,150,.3)}
+  .mini.danger:hover{background:rgba(255,120,150,.26)}
+
+  /* ---------- 弹幕管理 ---------- */
+  .lnk{border:none;background:none;color:var(--violet);font-size:11.5px;font-weight:600;
+    cursor:pointer;padding:3px 6px;border-radius:6px}
+  .lnk:hover{background:rgba(167,139,250,.14)}
+  .lnk.danger{color:#ff9db4}
+  .lnk.danger:hover{background:rgba(255,120,150,.15)}
+  .q{padding:7px 11px;border-radius:8px;border:1px solid var(--line2);
+    background:rgba(0,0,0,.22);color:var(--ink);font-size:11.5px;outline:none;width:190px}
+  .q:focus{border-color:var(--violet)}
+  .dmrow{display:flex;align-items:center;gap:11px;padding:9px 13px;border-radius:10px;
+    background:rgba(255,255,255,.035);margin-bottom:5px}
+  .dmrow:hover{background:rgba(255,255,255,.07)}
+  .dmrow .dmT{flex-shrink:0;width:62px;font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+  .dmrow .dmDot{flex-shrink:0;width:11px;height:11px;border-radius:50%;border:1px solid rgba(255,255,255,.35)}
+  .dmrow .dmText{flex:1;min-width:0;font-size:13px;word-break:break-all}
+  .dmrow .dmIp{flex-shrink:0;font-size:10.5px;color:#7f729a;font-family:monospace}
+  .dmvrow{cursor:pointer}
+  .dmvrow .cntpill{font-size:11px;padding:2px 9px;border-radius:20px;
+    background:rgba(167,139,250,.16);color:#cbb8e8;font-weight:700}
+  .dmvrow.off .cntpill{background:rgba(255,120,150,.14);color:#ff9db4}
+
+  /* ---------- 数据库 ---------- */
+  .dbtools{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+  .dbtools .ubtn{display:inline-block;text-align:center}
+  .dbwrap{overflow:auto;max-width:100%;border:1px solid var(--line);border-radius:12px;
+    background:rgba(0,0,0,.16);margin:0 18px}
+  .dbtable{border-collapse:collapse;width:100%;font-size:12px}
+  .dbtable th,.dbtable td{padding:8px 11px;text-align:left;white-space:nowrap;
+    border-bottom:1px solid var(--line);max-width:340px;overflow:hidden;text-overflow:ellipsis}
+  .dbtable th{position:sticky;top:0;z-index:1;background:#241636;color:#cbb8e8;
+    font-weight:700;font-size:11px;letter-spacing:.04em;text-transform:uppercase;
+    cursor:pointer;user-select:none}
+  .dbtable th:hover{color:#fff}
+  .dbtable th.sorted{color:var(--violet)}
+  .dbtable th small{font-weight:400;opacity:.55;text-transform:none;letter-spacing:0}
+  .dbtable td{color:var(--ink);font-variant-numeric:tabular-nums}
+  .dbtable tbody tr:hover td{background:rgba(255,255,255,.045)}
+  .dbtable td.null{color:#6f6285;font-style:italic}
+  .dbtable td.num{text-align:right;color:#d9c9f5}
+  .dbwrap .loading,.dbwrap .empty{padding:18px}
+  .pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;
+    padding:10px 16px 14px;font-size:11.5px;color:var(--dim);flex-wrap:wrap}
+  .pager button{padding:5px 11px;border-radius:8px;border:1px solid var(--line2);
+    background:rgba(255,255,255,.05);color:var(--ink);font-size:11.5px;font-weight:600;cursor:pointer}
+  .pager button:disabled{opacity:.35;cursor:not-allowed}
+  .pager button:not(:disabled):hover{background:rgba(255,255,255,.14)}
+  .sqlbox{width:100%;min-height:96px;resize:vertical;padding:12px 14px;border-radius:11px;
+    border:1px solid var(--line2);background:rgba(0,0,0,.28);color:#e9dcff;
+    font-family:ui-monospace,Consolas,"Courier New",monospace;font-size:12.5px;line-height:1.7;outline:none}
+  .sqlbox:focus{border-color:var(--violet);background:rgba(0,0,0,.38)}
+
+  /* ---------- 日志 ---------- */
+  .logbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .seg{display:flex;border:1px solid var(--line2);border-radius:10px;overflow:hidden;flex-shrink:0}
+  .seg button{padding:8px 13px;border:none;background:transparent;color:var(--dim);
+    font-size:12px;font-weight:600;cursor:pointer;transition:.16s}
+  .seg button:hover{background:rgba(255,255,255,.06);color:var(--ink)}
+  .seg button.on{background:rgba(167,139,250,.26);color:#fff}
+  select.search{appearance:none;cursor:pointer;padding-right:26px;
+    background-image:linear-gradient(45deg,transparent 50%,var(--dim) 50%),linear-gradient(135deg,var(--dim) 50%,transparent 50%);
+    background-position:calc(100% - 14px) 50%,calc(100% - 9px) 50%;
+    background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+  select.search option{background:#241636;color:var(--ink)}
+  .logbox{max-height:520px;overflow:auto;background:rgba(0,0,0,.3);
+    font-family:ui-monospace,Consolas,"Courier New",monospace;font-size:11.5px;line-height:1.65;
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+  .lrow{display:flex;gap:9px;padding:5px 16px;align-items:baseline;
+    border-bottom:1px solid rgba(255,255,255,.045)}
+  .lrow:hover{background:rgba(255,255,255,.045)}
+  .lrow .lt{flex-shrink:0;color:#7f729a;font-variant-numeric:tabular-nums}
+  .lrow .ll{flex-shrink:0;width:46px;font-size:10px;font-weight:700;letter-spacing:.05em}
+  .lrow .lk{flex-shrink:0;padding:0 6px;border-radius:5px;background:rgba(255,255,255,.08);
+    color:#b9a9d6;font-size:10px}
+  .lrow .lm{flex:1;min-width:0;word-break:break-all;color:#e7dcfa}
+  .lrow .li{flex-shrink:0;color:#7f729a;font-size:10.5px}
+  .lrow.lv-info .ll{color:#8fd9c2}
+  .lrow.lv-warn .ll{color:#ffcf8a}
+  .lrow.lv-error .ll{color:#ff9db4}
+  .lrow.lv-warn{background:rgba(255,190,90,.05)}
+  .lrow.lv-error{background:rgba(255,90,120,.075)}
+  .logbox .empty,.logbox .loading{padding:26px}
+  .logbox::-webkit-scrollbar{width:9px}
+  .logbox::-webkit-scrollbar-thumb{background:rgba(167,139,250,.3);border-radius:99px}
+
+  /* ---------- 监控 ---------- */
+  #view-monitor .cards{grid-template-columns:repeat(4,1fr)}
+  @media(max-width:1180px){#view-monitor .cards{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:760px){#view-monitor .cards{grid-template-columns:repeat(2,1fr)}}
+  .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .chart{background:rgba(0,0,0,.2);border:1px solid var(--line);border-radius:12px;padding:11px 12px 6px}
+  .chart .ct{display:flex;align-items:baseline;gap:8px;font-size:11.5px;color:var(--dim);margin-bottom:4px}
+  .chart .ct b{margin-left:auto;font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
+  .chart svg{display:block;width:100%;height:70px;overflow:visible}
+  .card b.c-warn{color:#ffcf8a}
+  .card b.c-err{color:#ff9db4}
+  .card b.c-ok{color:#8fd9c2}
+
+  /* ---------- 网络拓扑图 ---------- */
+  .topo{width:100%;overflow-x:auto;background:
+      radial-gradient(circle at 50% 50%,rgba(167,139,250,.05),transparent 70%),
+      rgba(0,0,0,.16);border:1px solid var(--line);border-radius:12px;padding:6px}
+  .topo svg{display:block;width:100%;min-width:720px;height:auto}
+  .topo .edge{stroke:rgba(167,139,250,.42);stroke-width:1.6;fill:none;
+    marker-end:url(#topoArrow)}
+  .topo .edge.down{stroke:rgba(255,120,150,.5)}
+  .topo .node{cursor:help}
+  .topo .node rect{fill:#241636;stroke:rgba(167,139,250,.45);stroke-width:1.4;rx:11}
+  .topo .node.ok rect{stroke:rgba(143,217,194,.6)}
+  .topo .node.hub rect{fill:#2e1b48;stroke:var(--violet);stroke-width:2}
+  .topo .node .nt{fill:var(--ink);font-size:12.5px;font-weight:700}
+  .topo .node .ns{fill:var(--dim);font-size:10px}
+  .topo .node .nv{fill:#8fd9c2;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+  .topo .node.alert rect{stroke:#ff9db4}
+  .topo .node.alert .nv{fill:#ff9db4}
+  .topo .elabel{fill:#7f729a;font-size:9.5px}
+  .errlist{display:flex;flex-direction:column;gap:7px;max-height:320px;overflow:auto}
+  .errlist .ei{display:flex;gap:9px;align-items:baseline;padding:9px 12px;border-radius:10px;
+    background:rgba(255,90,120,.07);border:1px solid rgba(255,120,150,.18);font-size:12px}
+  .errlist .ei.warn{background:rgba(255,190,90,.06);border-color:rgba(255,190,90,.18)}
+  .errlist .ei .t{flex-shrink:0;color:#9b8db6;font-size:11px;font-variant-numeric:tabular-nums}
+  .errlist .ei .m{flex:1;min-width:0;word-break:break-all;line-height:1.6}
+  .errlist .ei .k{flex-shrink:0;font-size:10px;padding:0 6px;border-radius:5px;background:rgba(255,255,255,.08)}
+
+  /* ---------- 观测中心 ---------- */
+  .obs-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;
+    padding:11px 16px;border-radius:12px;border:1px solid var(--line);
+    background:linear-gradient(90deg,rgba(167,139,250,.10),rgba(0,0,0,.12))}
+  .obs-live{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:var(--ink)}
+  .obs-live i{width:8px;height:8px;border-radius:50%;background:#57d9a3;box-shadow:0 0 0 4px rgba(87,217,163,.16);
+    animation:obspulse 2s infinite}
+  @keyframes obspulse{0%,100%{opacity:1}50%{opacity:.35}}
+  .obs-meta{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+  .obs-bar-actions{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .mini-chk{font-size:11.5px;color:var(--dim);display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+  .head-actions{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-left:auto}
+  .head-actions select,.head-actions input[type=search]{background:rgba(0,0,0,.25);border:1px solid var(--line);
+    color:var(--ink);border-radius:8px;padding:5px 9px;font-size:11.5px;outline:none}
+  .head-actions select:focus,.head-actions input:focus{border-color:var(--violet)}
+  .chart-svg{height:64px}
+  .health-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+  .health-item{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:11px;
+    background:rgba(0,0,0,.18);border:1px solid var(--line)}
+  .health-item .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+  .health-item.ok .dot{background:#57d9a3;box-shadow:0 0 0 4px rgba(87,217,163,.14)}
+  .health-item.bad .dot{background:#ff6b8a;box-shadow:0 0 0 4px rgba(255,107,138,.14)}
+  .health-item .hn{font-size:12.5px;font-weight:700;color:var(--ink)}
+  .health-item .hd{font-size:10.5px;color:var(--dim);word-break:break-all;margin-top:2px}
+  .obs-cards .card-alert{background:linear-gradient(135deg,rgba(255,107,138,.13),rgba(0,0,0,.12));
+    border-color:rgba(255,107,138,.28)}
+  .obs-cards .card-alert b{color:#ff9db4}
+
+  /* ---------- 架构图 ---------- */
+  .arch-wrap{background:linear-gradient(160deg,rgba(167,139,250,.06),rgba(0,0,0,.16));
+    border:1px solid var(--line);border-radius:var(--radius);padding:8px;overflow:hidden}
+  .arch-wrap svg{width:100%;height:auto;display:block}
+  .arch-legend{display:flex;gap:16px;flex-wrap:wrap;padding:12px 16px 2px;font-size:11.5px;color:var(--dim)}
+  .arch-legend span{display:inline-flex;align-items:center;gap:6px}
+  .arch-legend i{width:11px;height:11px;border-radius:3px;display:inline-block}
+  .arch-note{padding:10px 16px 2px;font-size:11.5px;color:var(--dim);line-height:1.9}
+  .arch-note b{color:var(--violet)}
+  .arch-status{font-size:11.5px;color:var(--dim);font-variant-numeric:tabular-nums}
+  .ts-wrap{display:flex;flex-direction:column;gap:9px;padding:16px 16px 2px}
+  .ts-head{display:flex;align-items:baseline;gap:10px;padding:0 2px 2px}
+  .ts-head b{font-size:12.5px}
+  .ts-head span{font-size:10.5px;color:var(--dim)}
+  .ts-row{display:flex;gap:12px;align-items:flex-start}
+  .ts-cat{flex:0 0 100px;font-size:10px;color:var(--dim);letter-spacing:.4px;padding:6px 0 6px 9px;
+    border-left:3px solid var(--c,#a78bfa);line-height:1.35}
+  .ts-cat b{display:block;font-size:11.5px;color:var(--ink);font-weight:600;margin-bottom:3px}
+  .ts-items{display:flex;flex-wrap:wrap;gap:7px;flex:1}
+  .ts-i{display:inline-flex;align-items:baseline;gap:5px;background:rgba(0,0,0,.22);
+    border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:9.5px;color:var(--dim);
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .ts-i b{font-size:11px;color:var(--ink);font-weight:600}
+  @media(max-width:760px){.ts-row{flex-direction:column;gap:6px}.ts-cat{flex:none;width:auto}}
+
+  /* ---------- 备份管理 ---------- */
+  .bk-hero{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:16px 18px;border-radius:12px;
+    background:linear-gradient(135deg,rgba(52,211,153,.10),rgba(167,139,250,.06));border:1px solid var(--line)}
+  .bk-hero .bk-ic{width:44px;height:44px;flex-shrink:0;border-radius:12px;display:grid;place-items:center;
+    font-size:22px;background:rgba(52,211,153,.15);color:#6ee7b7}
+  .bk-hero .bk-tx{flex:1;min-width:180px}
+  .bk-hero .bk-tx b{font-size:14px;display:block;margin-bottom:3px}
+  .bk-hero .bk-tx span{font-size:11.5px;color:var(--dim);line-height:1.6}
+  .bk-state{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:4px 10px;border-radius:20px;
+    background:rgba(255,255,255,.05);color:var(--dim);white-space:nowrap}
+  .bk-state i{width:7px;height:7px;border-radius:50%;background:#6ee7b7;box-shadow:0 0 0 3px rgba(110,231,183,.15)}
+  .bk-state.running i{background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.15);animation:bkpulse 1s infinite}
+  .bk-state.failed i{background:#ff9db4;box-shadow:0 0 0 3px rgba(255,157,180,.15)}
+  @keyframes bkpulse{50%{opacity:.4}}
+  .bk-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line);font-size:12px}
+  .bk-row:last-child{border-bottom:none}
+  .bk-row:hover{background:rgba(255,255,255,.03)}
+  .bk-row .f{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--txt);font-size:11.5px}
+  .bk-row .sz{color:var(--dim);width:64px;flex-shrink:0;font-variant-numeric:tabular-nums}
+  .bk-row .tm{color:var(--dim);flex:1;font-variant-numeric:tabular-nums}
+  .bk-row .ops{display:flex;gap:7px;flex-shrink:0}
+  .bk-row .ops button{cursor:pointer;font-size:11px;padding:4px 10px;border-radius:7px;border:1px solid var(--line);
+    background:rgba(255,255,255,.04);color:var(--dim);transition:.15s}
+  .bk-row .ops button:hover{border-color:var(--violet);color:var(--txt)}
+  .bk-row .ops button.del:hover{border-color:#ff9db4;color:#ff9db4}
+  .bk-empty{padding:26px;text-align:center;color:var(--dim);font-size:12px}
+
+  /* ---------- SSH 控制台 ---------- */
+  .console-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 14px;margin-bottom:10px;
+    border-radius:10px;background:rgba(0,0,0,.2);border:1px solid var(--line);font-size:11.5px;color:var(--dim)}
+  .console-bar .dot{width:8px;height:8px;border-radius:50%;background:#6ee7b7;flex-shrink:0}
+  .console-bar .dot.off{background:#ff9db4}
+  .console-bar code{background:rgba(167,139,250,.12);color:#cbb8e8;padding:2px 7px;border-radius:5px;font-size:11px}
+  .console-frame{width:100%;height:560px;border:1px solid var(--line);border-radius:12px;background:#12121c;display:block}
+  .console-mask{position:absolute;inset:0;display:grid;place-items:center;background:rgba(18,18,28,.92);
+    color:var(--dim);font-size:13px;z-index:2;border-radius:12px}
+  .console-holder{position:relative}
+
+  .gbar{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;
+    border-bottom:1px solid var(--line);font-size:12px}
+  .gbar:last-child{border-bottom:none}
+  .gbar:hover{background:rgba(255,255,255,.03)}
+  .gbar .badge{flex-shrink:0;font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700}
+  .badge.client{background:rgba(167,139,250,.2);color:#cbb8e8}
+  .badge.server{background:rgba(255,190,90,.18);color:#ffcf8a}
+  .badge.fatal{background:rgba(255,107,138,.2);color:#ff9db4}
+  .gbar .gmsg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+  .gbar .gnum{flex-shrink:0;color:#ffcf8a;font-weight:700;font-variant-numeric:tabular-nums}
+  .gbar .gtime{flex-shrink:0;color:var(--dim);font-size:10.5px;font-variant-numeric:tabular-nums}
+  .erow{padding:10px 12px;border-radius:10px;border-bottom:1px solid var(--line);cursor:pointer}
+  .erow:last-child{border-bottom:none}
+  .erow:hover{background:rgba(255,255,255,.03)}
+  .erow.sel{background:rgba(167,139,250,.12);box-shadow:inset 0 0 0 1px rgba(167,139,250,.35)}
+  .erow.resolved{opacity:.5}
+  .erow .eh{display:flex;gap:8px;align-items:center;font-size:11px;margin-bottom:4px}
+  .erow .eh .etime{color:var(--dim);font-variant-numeric:tabular-nums}
+  .erow .em{font-size:12px;color:var(--ink);word-break:break-all;line-height:1.5}
+  .erow .estack{font-size:10.5px;color:#9b8db6;margin-top:5px;white-space:pre-wrap;word-break:break-all;
+    max-height:90px;overflow:auto;background:rgba(0,0,0,.22);border-radius:7px;padding:7px 9px;display:none}
+  .erow.open .estack{display:block}
+  .erow .eflag{flex-shrink:0;font-size:10px;padding:1px 6px;border-radius:5px}
+  .erow .eflag.open{background:rgba(255,107,138,.16);color:#ff9db4}
+  .erow .eflag.done{background:rgba(87,217,163,.14);color:#8fd9c2}
+  .trow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12px}
+  .trow:last-child{border-bottom:none}
+  .trow .tn{font-family:ui-monospace,monospace;color:var(--ink);min-width:150px}
+  .trow .tb{flex:1;height:6px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden}
+  .trow .tb i{display:block;height:100%;background:linear-gradient(90deg,var(--violet),var(--pink))}
+  .trow .tv{color:var(--dim);font-variant-numeric:tabular-nums;min-width:110px;text-align:right}
+  .pwd-form{max-width:460px;display:flex;flex-direction:column;gap:14px}
+  .pwd-form label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--dim)}
+  .pwd-form label input{background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;
+    padding:11px 13px;font-size:13px;color:var(--ink);outline:none}
+  .pwd-form label input:focus{border-color:var(--violet)}
+  .pwd-actions{display:flex;align-items:center;gap:14px;margin-top:4px}
+  .pwd-msg{font-size:12px}
+  .pwd-msg.ok{color:#8fd9c2}.pwd-msg.err{color:#ff9db4}
+  .mini.danger{color:#ff9db4;border-color:rgba(255,107,138,.3)}
+
+  /* ---------- 通用 ---------- */
+  #toast{position:fixed;left:50%;top:20px;transform:translate(-50%,-90px);z-index:90;
+    padding:11px 22px;border-radius:11px;font-size:13px;font-weight:600;opacity:0;
+    pointer-events:none;transition:.3s cubic-bezier(.4,0,.2,1);box-shadow:0 12px 34px rgba(8,3,18,.5);
+    background:linear-gradient(135deg,var(--violet),var(--pink));color:#2a1640}
+  #toast.show{transform:translate(-50%,0);opacity:1}
+  #toast.err{background:linear-gradient(135deg,#ff8fa8,#ff6b8b);color:#fff}
+
+  #upMask{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
+    background:rgba(10,4,20,.6);backdrop-filter:blur(4px)}
+  #upMask.show{display:flex}
+  .up-card{width:min(410px,88vw);padding:20px 22px 18px;border-radius:16px;color:#fff;
+    background:linear-gradient(160deg,rgba(44,26,70,.98),rgba(24,12,40,.98));
+    border:1px solid rgba(167,139,250,.3);box-shadow:0 26px 64px rgba(0,0,0,.55)}
+  .up-card h4{margin:0 0 5px;font-size:14px;font-weight:700}
+  .up-name{font-size:11.5px;color:#b9a9d6;word-break:break-all;margin-bottom:12px;line-height:1.5}
+  .up-bar{height:7px;border-radius:99px;background:rgba(255,255,255,.13);overflow:hidden}
+  .up-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#a78bfa,#f0a6ca);transition:width .18s ease}
+  .up-meta{display:flex;justify-content:space-between;margin-top:9px;font-size:11.5px;color:#cbb8e8;
+    font-variant-numeric:tabular-nums}
+  .up-meta b{color:#fff}
+
+  @media(max-width:860px){
+    #app.show{display:block}                     /* 移动端不能再用 grid，否则侧栏会把整页撑宽 */
+    .side{position:static;height:auto;min-width:0;flex-direction:row;align-items:center;gap:8px;
+      padding:11px 10px;border-right:none;border-bottom:1px solid var(--line);overflow-x:auto}
+    .brand{padding:0;flex-shrink:0}
+    .brand>span{display:none}                    /* 手机上只留 ✦ 图标，把宽度让给六个导航 */
+    .nav{flex-direction:row;gap:3px;flex-shrink:0}
+    .nav button{width:auto;white-space:nowrap;padding:7px 9px;font-size:12px;gap:7px}
+    .nav button .cnt{display:none}
+    .side-foot{margin:0 0 0 auto;flex-direction:row;border:none;padding:0;gap:4px;flex-shrink:0}
+    .side-foot a{display:none}                  /* 手机上把「查看网站」收起来，给退出登录腾位置 */
+    .side-foot a,.side-foot button{font-size:11.5px;padding:7px 9px;white-space:nowrap}
+    .main{padding:18px 13px 60px}
+    .topbar{margin-bottom:18px}
+    .topbar h1{font-size:19px}
+    .topbar .desc{display:none}
+    .top-actions{margin-left:0;width:100%}
+    .tbtn{flex:1 1 auto;text-align:center;padding:9px 10px}
+    .cards{grid-template-columns:repeat(2,1fr)}
+    .card b{font-size:19px}
+    .alist{max-height:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- 登录 -->
+<div id="loginView">
+  <form class="login-card" id="loginForm">
+    <div class="ico">🔐</div>
+    <h1>管理后台</h1>
+    <p>模糊二维码 · 内容工作室</p>
+    <input type="password" id="pw" placeholder="请输入管理密码" autocomplete="current-password" required />
+    <button type="submit">进入</button>
+    <div class="hint">密码在服务器 <code>.env</code> 里配置。<br>忘了就执行 <code>node tools/hash-password.js '新密码'</code> 写回后重启服务。</div>
+  </form>
+</div>
+
+<!-- 后台 -->
+<div id="app">
+  <aside class="side">
+    <div class="brand">
+      <span class="mark">✦</span>
+      <span>模糊二维码<small>CONTENT STUDIO</small></span>
+    </div>
+    <nav class="nav">
+      <button data-view="overview" class="on"><span class="ic">▤</span>概览</button>
+      <button data-view="articles"><span class="ic">✎</span>文章<span class="cnt" id="navArtCount">0</span></button>
+      <button data-view="videos"><span class="ic">▷</span>小影院<span class="cnt" id="navVidCount">0</span></button>
+      <button data-view="danmaku"><span class="ic">✺</span>弹幕<span class="cnt" id="navDmCount">0</span></button>
+      <button data-view="db"><span class="ic">▦</span>数据库<span class="cnt" id="navDbCount">0</span></button>
+      <button data-view="logs"><span class="ic">≡</span>日志<span class="cnt" id="navLogCount">0</span></button>
+      <button data-view="arch"><span class="ic">◈</span>架构图</button>
+      <button data-view="backup"><span class="ic">▣</span>备份管理</button>
+      <button data-view="settings"><span class="ic">⚙</span>设置</button>
+    </nav>
+    <div class="side-foot">
+      <a href="/" target="_blank" rel="noopener">↗ 查看网站</a>
+      <button id="btnLogout">退出登录</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h1 id="pageTitle">概览</h1>
+      <span class="desc" id="pageDesc"></span>
+      <div class="top-actions">
+        <button class="tbtn" id="btnExport">导出备份</button>
+        <button class="tbtn" id="btnImport">导入备份</button>
+        <button class="tbtn primary" id="btnNew">＋ 写新文章</button>
+      </div>
+    </div>
+
+    <!-- 概览 -->
+    <section class="view on" id="view-overview">
+      <div class="cards">
+        <div class="card"><span class="k">文章总数</span><b id="stTotal">0</b></div>
+        <div class="card"><span class="k">已发布</span><b id="stPub">0</b></div>
+        <div class="card"><span class="k">草稿</span><b id="stDraft">0</b></div>
+        <div class="card"><span class="k">总阅读</span><b id="stViews">0</b></div>
+        <div class="card"><span class="k">图片占用</span><b id="stImg">0 B</b></div>
+        <div class="card"><span class="k">视频</span><b id="stVid">0 个</b><em id="stVidSize">—</em></div>
+        <div class="card"><span class="k">弹幕</span><b id="stDm">0 条</b><em>游客发的内容</em></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">快捷操作</div>
+        <div class="panel-body quick">
+          <button data-go="articles" data-new="1">✎ 写一篇新文章</button>
+          <button data-go="videos">▷ 上传视频到小影院</button>
+          <button data-go="danmaku">✺ 查看与管理弹幕</button>
+          <button data-go="db">▦ 数据库与备份</button>
+          <a class="quicklink" href="/" target="_blank" rel="noopener">↗ 打开网站首页</a>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">最近文章<span class="sp" id="recentHint"></span></div>
+        <div class="panel-body recent" id="recentList"><div class="loading">加载中…</div></div>
+      </div>
+    </section>
+
+    <!-- 文章 -->
+    <section class="view" id="view-articles">
+      <div class="two">
+        <div class="panel">
+          <div class="panel-head">文章<span class="sp" id="listCount"></span></div>
+          <div class="panel-body" style="padding-bottom:10px">
+            <input class="search" id="q" type="text" placeholder="搜索标题或标签…" />
+          </div>
+          <div class="alist" id="alist"><div class="loading">加载中…</div></div>
+        </div>
+
+        <div class="panel" id="editorPanel">
+          <div class="panel-head">✍️ <span id="editorTitle">写新文章</span></div>
+          <div class="editor">
+            <div class="field">
+              <label>标题</label>
+              <input type="text" id="fTitle" placeholder="给文章起个标题…" maxlength="200" />
+            </div>
+            <div class="field">
+              <label>标签</label>
+              <input type="text" id="fTag" placeholder="如：技术 / 随笔 / 生活" maxlength="60" />
+            </div>
+            <div class="field">
+              <label>封面图</label>
+              <div class="cover-row">
+                <div class="cover-prev" id="coverPrev">暂无封面</div>
+                <div class="upload-btns">
+                  <button class="ubtn" id="btnCover" type="button">⬆️ 上传封面</button>
+                  <button class="ubtn danger" id="btnCoverClear" type="button">✕ 移除</button>
+                  <div class="tip" style="width:100%">PNG / JPG / GIF / WebP，会自动压到 1920px 内再传</div>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label>正文</label>
+              <textarea id="fBody" placeholder="在这里写下文章内容…支持 # 标题、- 列表、> 引用、**加粗**"></textarea>
+              <div class="tip">
+                <button class="ubtn" id="btnBodyImg" type="button" style="padding:7px 11px;font-size:11.5px">🖼️ 插入图片</button>
+                <span style="margin-left:8px">插入后会出现在光标处</span>
+              </div>
+            </div>
+            <div class="field" style="display:flex;align-items:center;gap:9px;margin-bottom:0">
+              <input type="checkbox" id="fPublish" checked style="width:15px;height:15px;accent-color:#a78bfa;margin:0" />
+              <label for="fPublish" style="margin:0;font-size:12.5px;color:var(--ink)">发布到前台</label>
+              <span class="tip" style="margin:0;font-size:11px">取消勾选则存为草稿</span>
+            </div>
+            <div class="editor-actions">
+              <button class="save" id="btnSave" type="button">💾 保存</button>
+              <button class="del" id="btnDelete" type="button" disabled>🗑️ 删除</button>
+              <span class="mode-tag" id="modeTag">新建</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 视频 -->
+    <section class="view" id="view-videos">
+      <div class="panel">
+        <div class="panel-head">上传<span class="sp" id="vidStat"></span></div>
+        <div class="panel-body">
+          <div class="vid-drop" id="vidDrop">
+            <b>把视频拖到这里</b>，或点下面的按钮选择（可多选）<br>
+            mp4 / webm / mkv / mov / avi，单个最大 <span id="vidMax">4096</span> MB
+          </div>
+          <div class="vid-tools">
+            <button class="ubtn" id="btnVidPick" type="button">⬆️ 选择视频</button>
+            <button class="ubtn" id="btnVidRefresh" type="button">↻ 刷新</button>
+            <span class="dir" id="vidDir">目录：—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="warnbox" id="vidWarn" style="display:none"></div>
+
+      <div class="panel">
+        <div class="panel-head">视频列表<span class="sp" id="vidCount"></span></div>
+        <div class="panel-body" id="vidList"><div class="loading">加载中…</div></div>
+      </div>
+    </section>
+
+    <!-- 弹幕 -->
+    <section class="view" id="view-danmaku">
+      <div class="cards">
+        <div class="card"><span class="k">弹幕总数</span><b id="dmTotal">—</b><em id="dmVideos">— 个视频</em></div>
+        <div class="card"><span class="k">涉及视频</span><b id="dmVideoCount">—</b><em id="dmOrphan">孤立弹幕 — 条</em></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          按视频查看
+          <span class="sp"><button class="lnk danger" id="btnDmClearAll" type="button">清空全部弹幕</button></span>
+        </div>
+        <div class="panel-body" id="dmVideoList"><div class="loading">加载中…</div></div>
+      </div>
+
+      <div class="panel" id="dmDetailPanel" style="display:none">
+        <div class="panel-head">
+          <span id="dmDetailTitle">弹幕明细</span>
+          <span class="sp">
+            <input class="q" id="dmQ" type="search" placeholder="搜索弹幕内容" />
+            <button class="lnk danger" id="btnDmClearOne" type="button">清空此视频</button>
+          </span>
+        </div>
+        <div class="panel-body" id="dmRows"><div class="loading">加载中…</div></div>
+        <div class="pager" id="dmPager"></div>
+      </div>
+    </section>
+
+    <!-- 数据库 -->
+    <section class="view" id="view-db">
+      <div class="cards">
+        <div class="card"><span class="k">数据库大小</span><b id="dbSize">—</b><em id="dbPath">—</em></div>
+        <div class="card"><span class="k">WAL 日志</span><b id="dbWal">—</b><em>检查点后可归零</em></div>
+        <div class="card"><span class="k">数据表</span><b id="dbTableCount">—</b><em>articles / danmaku …</em></div>
+        <div class="card"><span class="k">总记录</span><b id="dbRows">—</b><em>所有表合计</em></div>
+        <div class="card"><span class="k">SQLite</span><b id="dbVer">—</b><em>服务端驱动版本</em></div>
+        <div class="card"><span class="k">页大小</span><b id="dbPageSize">—</b><em>页数决定增长方式</em></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">数据表<span class="sp">点「浏览」看内容，点「CSV」导出这一张表</span></div>
+        <div class="panel-body" id="dbTables"><div class="loading">读取中…</div></div>
+      </div>
+
+      <div class="panel" id="dbBrowsePanel" style="display:none">
+        <div class="panel-head">
+          数据浏览 · <code id="dbBrowseName" style="font-size:12px;color:var(--violet)">—</code>
+          <span class="sp" id="dbGridMeta"></span>
+        </div>
+        <div class="panel-body" style="padding-bottom:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input class="search" id="dbSearch" type="text" placeholder="在本表里搜索…" style="flex:1 1 200px;margin:0" />
+          <button class="mini" id="dbReload">↻ 刷新</button>
+          <button class="mini" id="dbClose">✕ 关闭</button>
+        </div>
+        <div class="dbwrap"><table class="dbtable" id="dbGrid"></table></div>
+        <div class="pager" id="dbPager"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">备份与维护<span class="sp">备份是完整快照，导出的是纯文本，可直接用 Excel 打开</span></div>
+        <div class="panel-body">
+          <div class="dbtools">
+            <a class="ubtn" id="dbDownload" href="/api/admin/db/export?type=db">⬇ 下载数据库备份</a>
+            <button class="ubtn" id="dbVacuum">🧹 压缩回收空间</button>
+            <button class="ubtn" id="dbCheckpoint">💧 合并 WAL 日志</button>
+            <button class="ubtn danger" id="dbOrphan">🗑️ 清理孤立弹幕</button>
+          </div>
+          <div class="tip" style="margin-top:10px">
+            备份会用 <code>VACUUM INTO</code> 生成一致性快照，含 WAL 里尚未合并的数据，不会拿到半个库。<br>
+            压缩（VACUUM）会重写整个库，空间不足时可能失败；孤立弹幕指对应视频已删除的弹幕。
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">只读查询<span class="sp" id="dbSqlMeta"></span></div>
+        <div class="panel-body">
+          <textarea class="sqlbox" id="dbSql" spellcheck="false"
+            placeholder="SELECT * FROM articles ORDER BY created_at DESC LIMIT 20"></textarea>
+          <div class="dbtools" style="margin-top:10px">
+            <button class="ubtn" id="dbRun">▶ 执行（Ctrl+Enter）</button>
+            <button class="ubtn" id="dbExample" data-sql="SELECT id,title,tag,published,views FROM articles ORDER BY created_at DESC LIMIT 20">示例：文章列表</button>
+            <button class="ubtn" id="dbExample2" data-sql="SELECT video, COUNT(*) AS 条数 FROM danmaku GROUP BY video ORDER BY 条数 DESC">示例：弹幕统计</button>
+          </div>
+          <div class="tip" style="margin-top:10px">只允许 <code>SELECT</code> / <code>WITH</code> / <code>EXPLAIN</code>，最多返回 200 行。写操作请用上面的前台功能。</div>
+          <div class="dbwrap" id="dbSqlOut" style="margin:12px 0 0"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 日志 -->
+    <section class="view" id="view-logs">
+      <div class="cards">
+        <div class="card"><span class="k">内存缓冲</span><b id="lgTotal">0</b><em>最新的一批，刷新即更新</em></div>
+        <div class="card"><span class="k">警告</span><b id="lgWarn" class="c-warn">0</b><em>4xx / 删除 / 降级</em></div>
+        <div class="card"><span class="k">错误</span><b id="lgErr" class="c-err">0</b><em>5xx 与异常堆栈</em></div>
+        <div class="card"><span class="k">日志文件</span><b id="lgFile">—</b><em id="lgFilePath">—</em></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">筛选<span class="sp" id="lgMeta"></span></div>
+        <div class="panel-body">
+          <div class="logbar">
+            <div class="seg" id="lgLevel">
+              <button class="on" data-lv="all">全部</button>
+              <button data-lv="warn+">警告+</button>
+              <button data-lv="error">错误</button>
+            </div>
+            <select class="search" id="lgKind" style="flex:0 0 auto;width:auto">
+              <option value="all">全部类别</option>
+            </select>
+            <input class="search" id="lgQ" type="text" placeholder="搜内容或 IP…" style="flex:1 1 160px;margin:0" />
+            <button class="mini" id="lgReload">↻ 刷新</button>
+            <button class="mini" id="lgAuto">⏸ 暂停自动</button>
+          </div>
+        </div>
+        <div class="logbox" id="logList"><div class="loading">加载中…</div></div>
+        <div class="pager">
+          <button id="lgMore">加载更早</button>
+          <span style="margin-right:auto" id="lgHint"></span>
+          <a class="mini" href="/api/admin/logs/export">⬇ 下载日志</a>
+          <button class="mini danger" id="lgClear">🗑 清空</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 观测中心（阿里云 ARMS 风格） -->
+    <section class="view" id="view-monitor">
+      <div class="obs-bar">
+        <span class="obs-live"><i></i>实时观测</span>
+        <span class="obs-meta" id="obsMeta">—</span>
+        <div class="obs-bar-actions">
+          <button class="mini" id="obsRefresh">↻ 刷新</button>
+          <label class="mini-chk"><input type="checkbox" id="obsAuto" checked /> 自动刷新</label>
+        </div>
+      </div>
+
+      <!-- 服务健康探测 -->
+      <div class="panel">
+        <div class="panel-head">服务健康 <span class="sp">依赖组件实时探测</span></div>
+        <div class="panel-body">
+          <div class="health-grid" id="obsHealth"><div class="loading">加载中…</div></div>
+        </div>
+      </div>
+
+      <!-- 核心指标卡 -->
+      <div class="cards obs-cards">
+        <div class="card"><span class="k">运行时长</span><b id="mtUp">—</b><em id="mtBoot">—</em></div>
+        <div class="card"><span class="k">CPU 占用</span><b id="mtCpu">—</b><em id="mtLoad">负载 —</em></div>
+        <div class="card"><span class="k">系统内存</span><b id="mtMem">—</b><em id="mtMemDetail">—</em></div>
+        <div class="card"><span class="k">请求总数</span><b id="mtReq">—</b><em id="mtQps">—</em></div>
+        <div class="card"><span class="k">平均响应</span><b id="mtAvg">—</b><em id="mtMax">—</em></div>
+        <div class="card"><span class="k">错误响应</span><b id="mtErr" class="c-ok">—</b><em id="mtErrDetail">—</em></div>
+        <div class="card card-alert"><span class="k">待处理 Bug</span><b id="obsOpen">—</b><em id="obsBugDetail">—</em></div>
+        <div class="card"><span class="k">磁盘已用</span><b id="mtDisk">—</b><em id="mtDiskDetail">—</em></div>
+      </div>
+
+      <!-- 错误趋势 + 性能趋势 -->
+      <div class="panel">
+        <div class="panel-head">错误趋势 <span class="sp" id="obsTrendHint">近 3 小时，按 5 分钟聚合</span></div>
+        <div class="panel-body">
+          <div class="charts">
+            <div class="chart">
+              <div class="ct"><span>Bug 上报数</span><b id="obsErrNow">0</b></div>
+              <svg id="chartErr" class="chart-svg" viewBox="0 0 300 70" preserveAspectRatio="none"></svg>
+            </div>
+            <div class="chart">
+              <div class="ct"><span>CPU 占用</span><b id="cCpu">0%</b></div>
+              <svg id="chartCpu" class="chart-svg" viewBox="0 0 300 70" preserveAspectRatio="none"></svg>
+            </div>
+            <div class="chart">
+              <div class="ct"><span>系统内存</span><b id="cMem">0%</b></div>
+              <svg id="chartMem" class="chart-svg" viewBox="0 0 300 70" preserveAspectRatio="none"></svg>
+            </div>
+            <div class="chart">
+              <div class="ct"><span>请求 / 秒</span><b id="cQps">0</b></div>
+              <svg id="chartQps" class="chart-svg" viewBox="0 0 300 70" preserveAspectRatio="none"></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bug 排行榜（按错误指纹聚合） -->
+      <div class="panel">
+        <div class="panel-head">Bug 排行 <span class="sp">相同错误自动归并，按出现次数排序</span></div>
+        <div class="panel-body" id="obsGroups"><div class="loading">加载中…</div></div>
+      </div>
+
+      <!-- 错误明细 -->
+      <div class="panel">
+        <div class="panel-head">
+          错误明细 <span class="sp" id="obsErrCount">—</span>
+          <div class="head-actions">
+            <select id="efSource"><option value="all">全部来源</option><option value="client">前端 JS</option><option value="server">后端 PHP</option></select>
+            <select id="efLevel"><option value="all">全部级别</option><option value="error">错误+</option><option value="warn">警告</option><option value="info">信息</option></select>
+            <select id="efState"><option value="all">全部状态</option><option value="open">待处理</option><option value="resolved">已处理</option></select>
+            <input id="efQ" type="search" placeholder="搜索错误信息…" />
+            <button class="mini" id="efResolve">✓ 标记已处理</button>
+            <button class="mini danger" id="efClear">清空</button>
+          </div>
+        </div>
+        <div class="panel-body" id="obsErrors"><div class="loading">加载中…</div></div>
+      </div>
+
+      <!-- 数据库表健康 -->
+      <div class="panel">
+        <div class="panel-head">数据库健康 <span class="sp" id="obsDbHint">—</span></div>
+        <div class="panel-body" id="obsTables"><div class="loading">加载中…</div></div>
+      </div>
+
+      <!-- 服务端信息 -->
+      <div class="panel">
+        <div class="panel-head">运行环境 <span class="sp" id="mtHost"></span></div>
+        <div class="panel-body"><div class="tip" id="mtEnv" style="line-height:2"></div></div>
+      </div>
+    </section>
+
+    <!-- 架构图 -->
+    <section class="view" id="view-arch">
+      <div class="panel">
+        <div class="panel-head">Windows 单机版架构 <span class="sp" id="archStatus">实时状态载入中…</span></div>
+        <div class="panel-body">
+          <div class="arch-wrap">
+            <svg viewBox="0 0 1040 470" role="img" aria-label="Windows 单机版架构图" xmlns="http://www.w3.org/2000/svg"
+                 font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif">
+              <defs>
+                <marker id="wArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M1 1L9 5L1 9" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+                <linearGradient id="wApp" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#2b2350"/><stop offset="1" stop-color="#241d44"/>
+                </linearGradient>
+                <linearGradient id="wStore" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#1e2b47"/><stop offset="1" stop-color="#1a2440"/>
+                </linearGradient>
+              </defs>
+
+              <text x="520" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#f4ecff">一个进程 · 一个数据库文件 · 零第三方依赖</text>
+              <text x="520" y="50" text-anchor="middle" font-size="10.5" fill="#a99cc4">浏览器请求进来，Node 自己既当 Web 服务器又当 API，数据写进本机 SQLite</text>
+
+              <!-- 浏览器 -->
+              <rect x="420" y="70" width="200" height="52" rx="10" fill="#3a2358" stroke="#6b4a9e" stroke-width="1.2"/>
+              <text x="520" y="92" text-anchor="middle" font-size="11.5" font-weight="600" fill="#e9dcff">浏览器 / 访客</text>
+              <text x="520" y="110" text-anchor="middle" font-size="9" fill="#bda8dd">首页 · 文章 · 小影院 · 后台</text>
+
+              <line x1="520" y1="122" x2="520" y2="152" stroke="#a78bfa" stroke-width="1.6" marker-end="url(#wArrow)"/>
+              <text x="532" y="143" font-size="8.5" fill="#a99cc4">HTTP :8080</text>
+
+              <!-- Node 主框 -->
+              <rect x="180" y="152" width="680" height="132" rx="12" fill="url(#wApp)" stroke="#5b4a8f" stroke-width="1.3"/>
+              <circle id="dot-app" cx="838" cy="172" r="4.5" fill="#6b5a8f"/>
+              <text x="200" y="176" font-size="12" font-weight="700" fill="#efe6ff">Node.js 22 · server.js（单进程）</text>
+              <text x="200" y="192" font-size="9" fill="#a99cc4">只依赖 Node 内置模块，不需要 Apache / MySQL / PHP</text>
+
+              <rect x="200" y="204" width="148" height="62" rx="8" fill="#332a5c" stroke="#4d3f7d"/>
+              <text x="274" y="226" text-anchor="middle" font-size="9.5" font-weight="600" fill="#e6dbff">静态页面</text>
+              <text x="274" y="243" text-anchor="middle" font-size="8.5" fill="#b3a3d4">HTML / CSS / JS</text>
+              <text x="274" y="257" text-anchor="middle" font-size="8.5" fill="#b3a3d4">视频 · 图片直出</text>
+
+              <rect x="366" y="204" width="148" height="62" rx="8" fill="#332a5c" stroke="#4d3f7d"/>
+              <text x="440" y="226" text-anchor="middle" font-size="9.5" font-weight="600" fill="#e6dbff">JSON API</text>
+              <text x="440" y="243" text-anchor="middle" font-size="8.5" fill="#b3a3d4">/api/* 路由</text>
+              <text x="440" y="257" text-anchor="middle" font-size="8.5" fill="#b3a3d4">文章 · 弹幕 · 上传</text>
+
+              <rect x="532" y="204" width="148" height="62" rx="8" fill="#332a5c" stroke="#4d3f7d"/>
+              <text x="606" y="226" text-anchor="middle" font-size="9.5" font-weight="600" fill="#e6dbff">会话与防护</text>
+              <text x="606" y="243" text-anchor="middle" font-size="8.5" fill="#b3a3d4">Cookie 签名</text>
+              <text x="606" y="257" text-anchor="middle" font-size="8.5" fill="#b3a3d4">同源校验 · 登录限流</text>
+
+              <rect x="698" y="204" width="148" height="62" rx="8" fill="#332a5c" stroke="#4d3f7d"/>
+              <text x="772" y="226" text-anchor="middle" font-size="9.5" font-weight="600" fill="#e6dbff">日志与指标</text>
+              <text x="772" y="243" text-anchor="middle" font-size="8.5" fill="#b3a3d4">内存环形缓冲</text>
+              <text x="772" y="257" text-anchor="middle" font-size="8.5" fill="#b3a3d4">落盘轮转 · 采样</text>
+
+              <!-- 两条落盘箭头 -->
+              <path d="M400 284 L400 310 L330 310 L330 326" fill="none" stroke="#6aa9ff" stroke-width="1.5" marker-end="url(#wArrow)"/>
+              <path d="M640 284 L640 310 L710 310 L710 326" fill="none" stroke="#6aa9ff" stroke-width="1.5" marker-end="url(#wArrow)"/>
+
+              <!-- SQLite -->
+              <rect x="180" y="326" width="300" height="96" rx="10" fill="url(#wStore)" stroke="#3f5f8f" stroke-width="1.2"/>
+              <circle id="dot-db" cx="460" cy="344" r="4.5" fill="#4a6a94"/>
+              <text x="200" y="352" font-size="11" font-weight="600" fill="#d8e6ff">SQLite · data/blog.db</text>
+              <text x="200" y="372" font-size="9" fill="#93a9c9">文章、弹幕、访问量、错误记录</text>
+              <text x="200" y="388" font-size="9" fill="#93a9c9">WAL 模式，读写互不阻塞</text>
+              <text x="200" y="406" font-size="8.5" fill="#7d94b3">后台「数据库」页可直接查表、导出 CSV</text>
+
+              <!-- 文件目录 -->
+              <rect x="560" y="326" width="300" height="96" rx="10" fill="url(#wStore)" stroke="#3f5f8f" stroke-width="1.2"/>
+              <circle id="dot-disk" cx="840" cy="344" r="4.5" fill="#4a6a94"/>
+              <text x="580" y="352" font-size="11" font-weight="600" fill="#d8e6ff">本地目录</text>
+              <text x="580" y="372" font-size="9" fill="#93a9c9">uploads/ 图片 · videos/ 视频</text>
+              <text x="580" y="388" font-size="9" fill="#93a9c9">backups/ 数据库快照</text>
+              <text x="580" y="406" font-size="8.5" fill="#7d94b3">整个项目目录拷走就能搬家</text>
+
+              <!-- 可选前置 -->
+              <text x="520" y="448" text-anchor="middle" font-size="8.5" fill="#7f719c">可选：前面加一层 Nginx（deploy/nginx.conf）做 HTTPS 与压缩；用 systemd 常驻（deploy/blog.service）；Windows 下直接双击启动即可</text>
+            </svg>
+          </div>
+
+          <div class="ts-wrap">
+            <div class="ts-head">
+              <b>技术栈</b>
+              <span>这个版本真正用到的东西，一共 4 组</span>
+            </div>
+            <div class="ts-row"><span class="ts-cat">运行时</span><span class="ts-items">
+              <span class="ts-i"><b>Node.js</b> 22 LTS</span>
+              <span class="ts-i"><b>node:http</b> 原生服务</span>
+              <span class="ts-i"><b>node:sqlite</b> 内置驱动</span>
+              <span class="ts-i"><b>scrypt</b> 密码哈希</span>
+              <span class="ts-i"><b>零依赖</b> 无 npm 包</span>
+            </span></div>
+            <div class="ts-row"><span class="ts-cat">数据</span><span class="ts-items">
+              <span class="ts-i"><b>SQLite</b> 单文件库</span>
+              <span class="ts-i"><b>WAL</b> 日志模式</span>
+              <span class="ts-i"><b>JSON</b> 导入导出</span>
+              <span class="ts-i"><b>文件快照</b> 备份</span>
+            </span></div>
+            <div class="ts-row"><span class="ts-cat">前端</span><span class="ts-items">
+              <span class="ts-i"><b>原生 HTML/CSS/JS</b> 无构建</span>
+              <span class="ts-i"><b>视频背景</b> 首页</span>
+              <span class="ts-i"><b>Markdown</b> 子集渲染</span>
+              <span class="ts-i"><b>弹幕</b> Canvas</span>
+            </span></div>
+            <div class="ts-row"><span class="ts-cat">部署</span><span class="ts-items">
+              <span class="ts-i"><b>直接运行</b> npm start</span>
+              <span class="ts-i"><b>systemd</b> 常驻</span>
+              <span class="ts-i"><b>Nginx</b> 可选前置</span>
+              <span class="ts-i"><b>一键脚本</b> deploy/install.sh</span>
+            </span></div>
+          </div>
+
+          <div class="arch-notes">
+            <p><b>看这张图要知道的三件事</b></p>
+            <p>① 没有中间件：Node 进程同时负责静态文件、API、会话，挂一个进程就全挂，但也不用维护 Apache/MySQL。</p>
+            <p>② 数据只有一处：<code>data/blog.db</code>。备份就是复制这个文件，恢复到任意机器把文件放回去即可。</p>
+            <p>③ 想要 K8s、MySQL、异地备份、SSH 控制台那套，请看另一个仓库 <code>blur-qr-blog-Ubuntu</code>。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 备份管理 -->
+    <section class="view" id="view-backup">
+      <div class="bk-hero">
+        <div class="bk-ic">▣</div>
+        <div class="bk-tx">
+          <b>SQLite 数据库备份</b>
+          <span>点「立即备份」把 data/blog.db 打成一份完整快照存到 backups/，保留最近 30 份。备份是同步完成的，页面刷新即可看到。</span>
+        </div>
+        <span class="bk-state" id="bkState"><i></i><span id="bkStateText">就绪</span></span>
+        <button class="tbtn primary" id="bkRun">立即备份</button>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <div class="panel-head">备份文件 <span class="sp" id="bkCount">加载中…</span></div>
+        <div class="panel-body" style="padding:0" id="bkList">
+          <div class="bk-empty">加载中…</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">说明</div>
+        <div class="panel-body">
+          <div class="tip" style="line-height:2">
+            · 备份是完整数据库文件（含建表与数据），停止服务后把它覆盖回 <code>data/blog.db</code> 即可恢复。<br>
+            · 备份存在项目的 <code>backups/</code> 目录，默认只留在本机；需要异地副本就把它同步到网盘或另一台机器。<br>
+            · 下载得到 <code>.db</code> 文件，可用任意 SQLite 客户端打开查看。删除后不可恢复。<br>
+            · 目前只支持手动备份，建议每周点一次；要定时就在系统里加一个计划任务复制 <code>data/blog.db</code>。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SSH 控制台 -->
+    <section class="view" id="view-console">
+      <div class="console-bar">
+        <span class="dot" id="cConnDot"></span>
+        <span id="cConnText">连接中…</span>
+        <span style="flex:1"></span>
+        <span>服务器：<code>VM2 · 192.168.200.12</code></span>
+        <span>提示：<code>exit</code> 退出 · <code>ssh root@192.168.200.11</code> 可跳到网关机</span>
+      </div>
+      <div class="console-holder">
+        <iframe id="consoleFrame" class="console-frame" title="SSH 控制台"></iframe>
+        <div class="console-mask" id="consoleMask">正在建立安全终端连接…</div>
+      </div>
+      <div class="tip" style="margin-top:10px;line-height:1.9">
+        终端已通过后台登录态鉴权，仅在浏览器内使用；这里的操作就是真实服务器上的操作，请谨慎执行。
+      </div>
+    </section>
+
+    <!-- 设置 -->
+    <section class="view" id="view-settings">
+      <div class="panel">
+        <div class="panel-head">修改管理密码 <span class="sp">修改后立即生效，当前登录态保持有效</span></div>
+        <div class="panel-body">
+          <form id="pwdForm" class="pwd-form" autocomplete="off">
+            <label>当前密码
+              <input type="password" id="pwdOld" placeholder="请输入当前密码" required autocomplete="current-password" />
+            </label>
+            <label>新密码
+              <input type="password" id="pwdNew" placeholder="至少 8 位" required minlength="8" autocomplete="new-password" />
+            </label>
+            <label>确认新密码
+              <input type="password" id="pwdNew2" placeholder="再输入一次新密码" required minlength="8" autocomplete="new-password" />
+            </label>
+            <div class="pwd-actions">
+              <button type="submit" class="tbtn primary">保存新密码</button>
+              <span class="pwd-msg" id="pwdMsg"></span>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">安全提示</div>
+        <div class="panel-body">
+          <div class="tip" style="line-height:2">
+            · 密码以 scrypt 哈希保存在 <code>data/admin.json</code>，不会明文存储。<br>
+            · 登录失败超过 8 次会锁定 15 分钟；所有写操作都有同源校验与 WAF 防护。<br>
+            · 忘记密码时可在项目目录执行：<code>node tools/hash-password.js '新密码' --write</code>，再重启服务。
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<input type="file" id="coverFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+<input type="file" id="bodyFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+<input type="file" id="importFile" accept="application/json,.json" hidden />
+<input type="file" id="vidFile" accept="video/*,.mp4,.m4v,.webm,.mkv,.mov,.avi,.flv,.ts" multiple hidden />
+
+<div id="upMask">
+  <div class="up-card">
+    <h4 id="upTitle">正在上传</h4>
+    <div class="up-name" id="upName"></div>
+    <div class="up-bar"><div class="up-fill" id="upFill"></div></div>
+    <div class="up-meta"><span id="upPct">0%</span><span id="upSize"></span></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  let articles = [], currentId = null, coverUrl = '', published = true;
+  let keyword = '', toastTimer, videoCount = 0;
+  let vidWritable = true, vidWriteErr = '';
+
+  function toast(msg, isErr){
+    const t=$('toast'); t.textContent=msg; t.className='show'+(isErr?' err':'');
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.className='',2600);
+  }
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function fmt(ts){const d=new Date(ts),p=n=>String(n).padStart(2,'0');
+    return d.getFullYear()+'.'+p(d.getMonth()+1)+'.'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())}
+  function fmtSize(b){
+    if(!b && b!==0) return '—';
+    if(b>=1073741824) return (b/1073741824).toFixed(2)+' GB';
+    if(b>=1048576) return (b/1048576).toFixed(1)+' MB';
+    if(b>=1024) return (b/1024).toFixed(0)+' KB';
+    return b+' B';
+  }
+  // 剩余时间：160 秒读作「2 分 40 秒」，比 160s 好懂
+  function fmtLeft(sec){
+    if(!isFinite(sec)||sec<=0) return '—';
+    if(sec<1) return '不到 1 秒';
+    if(sec<60) return Math.ceil(sec)+' 秒';
+    const m=Math.floor(sec/60), s=Math.round(sec%60);
+    return m+' 分'+(s?' '+s+' 秒':'');
+  }
+  // 上传进度用滑动窗口算瞬时速度：从点击开始算平均会被起步的前几百毫秒拖死
+  function makeMeter(){
+    let t0=Date.now(), lastT=t0, lastL=0, ema=0;
+    return {
+      reset(){ t0=Date.now(); lastT=t0; lastL=0; ema=0; },
+      sample(loaded){
+        const now=Date.now(), dt=(now-lastT)/1000;
+        if(dt>=0.4){
+          const inst=(loaded-lastL)/dt;
+          ema = ema ? ema*0.6+inst*0.4 : inst;
+          lastT=now; lastL=loaded;
+        }
+        // 还没采到点时，退回「已传字节 / 已用时间」，但至少按 0.4 秒折算
+        return ema || loaded/Math.max(0.4,(now-t0)/1000);
+      }
+    };
+  }
+
+  async function api(path, opts){
+    const res = await fetch(path, Object.assign({credentials:'same-origin'}, opts||{}));
+    let d={}; try{d=await res.json()}catch(e){}
+    if(res.status===401){ showLogin(); throw new Error(d.error||'登录已过期，请重新登录'); }
+    if(!res.ok) throw new Error(d.error||('请求失败 ('+res.status+')'));
+    return d;
+  }
+
+  /* ---------- 视图切换 ---------- */
+  const TITLES = {
+    overview: ['概览', '站点数据与快捷入口'],
+    articles: ['文章', '写、改、删，都在这一页'],
+    videos:  ['小影院', '上传视频，游客就能看也能发弹幕'],
+    danmaku: ['弹幕', '按视频查看、搜索、删除游客发的弹幕'],
+    db:      ['数据库', '表结构、数据浏览、备份与维护'],
+    logs:    ['日志', '登录、发布、上传、报错，按时间倒序'],
+    monitor: ['观测中心', '服务健康 / 错误追踪 / 性能趋势 / 数据库，一屏看完'],
+    arch:    ['架构图', '从你点开网页，到数据落库，一次看清整条链路'],
+    backup:  ['备份管理', '手动备份 / 下载 / 删除，异地双份留存'],
+    console: ['SSH 控制台', '浏览器里直接操作服务器，无需另外登录'],
+    settings:['设置', '修改管理密码与站点偏好']
+  };
+  let logTimer=null, mtTimer=null, bkTimer=null, LOG_AUTO=true;
+
+  function syncTimers(view){
+    clearInterval(logTimer); logTimer=null;
+    clearInterval(mtTimer);  mtTimer=null;
+    clearInterval(bkTimer);  bkTimer=null;
+    // 只给当前页开轮询，切走就停，后台别偷偷发请求
+    if(view==='logs' && LOG_AUTO) logTimer=setInterval(()=>{ if(!document.hidden) loadLogs(false,true); },4000);
+    if(view==='monitor' && OBS.auto) mtTimer=setInterval(()=>{ if(!document.hidden) loadObservability(); },6000);
+    if(view==='backup') bkTimer=setInterval(()=>{ if(!document.hidden) pollBackup(); },2000);
+  }
+
+  function go(view){
+    document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on', v.id==='view-'+view));
+    document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on', b.dataset.view===view));
+    const t=TITLES[view]||['',''];
+    $('pageTitle').textContent=t[0]; $('pageDesc').textContent=t[1];
+    // 数据库/日志/监控都有自己的下载入口，顶部的文章 JSON 导出导入会混淆，先收起来
+    const content = view==='overview' || view==='articles';
+    $('btnExport').style.display = content?'':'none';
+    $('btnImport').style.display = content?'':'none';
+    $('btnNew').style.display = content?'':'none';
+    syncTimers(view);
+    if(view==='db') loadDb();          // 每次进来都刷新一遍，避免看到过期的行数
+    if(view==='danmaku') loadDmVideos();
+    if(view==='logs') loadLogs(true);
+    if(view==='monitor') loadObservability();
+    if(view==='arch') loadArchStatus();
+    if(view==='backup') loadBackups();
+    if(view==='console') onConsoleEnter();
+  }
+  document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.view)));
+  document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>{
+    go(el.dataset.go);
+    if(el.dataset.new) openEditor(null);
+  }));
+
+  /* ---------- 登录态 ---------- */
+  function showLogin(){
+    $('loginView').classList.add('show'); $('app').classList.remove('show');
+  }
+  function showDash(){
+    $('loginView').classList.remove('show'); $('app').classList.add('show');
+  }
+
+  async function checkSession(){
+    try{ const d=await api('/api/session'); if(d.authed){ showDash(); await loadAll(); } else showLogin(); }
+    catch(e){ showLogin(); }
+  }
+
+  async function loadAll(){
+    await load();            // 概览的「最近文章」要用到列表，必须等它先完成
+    await loadStats();
+    await loadVideos();
+    await loadDb();
+    go('overview');
+  }
+
+  /* ---------- 文章 ---------- */
+  async function load(){
+    $('alist').innerHTML='<div class="loading">加载中…</div>';
+    try{
+      const d=await api('/api/articles/all');
+      articles=d.articles||[];
+      $('navArtCount').textContent=articles.length;
+      renderList();
+    }catch(e){ $('alist').innerHTML='<div class="empty">加载失败：'+esc(e.message)+'</div>'; }
+  }
+
+  function renderList(){
+    const list = keyword
+      ? articles.filter(a => (a.title||'').toLowerCase().includes(keyword) || (a.tag||'').toLowerCase().includes(keyword))
+      : articles;
+    $('listCount').textContent = articles.length ? (list.length + ' / ' + articles.length + ' 篇') : '';
+    if(!list.length){
+      $('alist').innerHTML = keyword
+        ? '<div class="empty">没有匹配「'+esc(keyword)+'」的文章</div>'
+        : '<div class="empty">还没有文章<br>点右上角「＋ 写新文章」开始吧</div>';
+      return;
+    }
+    $('alist').innerHTML=list.map(a=>
+      '<div class="aitem'+(a.id===currentId?' active':'')+'" data-id="'+a.id+'">'+
+        '<h4>'+esc(a.title)+'</h4>'+
+        '<div class="m">'+(a.published?'':'<span class="chip draft">草稿</span>')+
+        (a.tag?'<span class="chip">'+esc(a.tag)+'</span>':'')+
+        '<span>'+fmt(a.created)+'</span></div>'+
+      '</div>').join('');
+    $('alist').querySelectorAll('.aitem').forEach(el=>{
+      el.addEventListener('click',()=>openEditor(Number(el.dataset.id)));
+    });
+  }
+
+  $('q').addEventListener('input',e=>{ keyword=e.target.value.trim().toLowerCase(); renderList(); });
+
+  function setCover(url){
+    coverUrl=url||'';
+    $('coverPrev').innerHTML=coverUrl?'<img src="'+esc(coverUrl)+'" alt="封面预览">':'暂无封面';
+  }
+  function openEditor(id){
+    currentId=id;
+    const a=articles.find(x=>x.id===id)||{};
+    $('fTitle').value=a.title||''; $('fTag').value=a.tag||''; $('fBody').value=a.body||'';
+    setCover(a.cover||'');
+    published = a.published !== false;
+    $('fPublish').checked = published;
+    $('editorTitle').textContent=id?'编辑文章':'写新文章';
+    $('modeTag').textContent=id?('编辑 #'+id):'新建';
+    $('btnDelete').disabled=!id;
+    go('articles');
+    renderList();
+    if(id) $('fTitle').focus();
+  }
+
+  /* ---------- 概览数据 ---------- */
+  async function loadStats(){
+    try{
+      const d=await api('/api/stats');
+      $('stTotal').textContent=d.total; $('stPub').textContent=d.published;
+      $('stDraft').textContent=d.drafts; $('stViews').textContent=d.views;
+      $('stImg').textContent=fmtSize(d.uploadBytes||0);
+      $('stDm').textContent=(d.danmaku||0)+' 条';
+    }catch(e){ /* 概览失败不影响编辑 */ }
+
+    const recent = articles.slice().sort((a,b)=>b.created-a.created).slice(0,6);
+    $('recentHint').textContent = recent.length ? '按发布时间倒序' : '';
+    $('recentList').innerHTML = recent.length
+      ? recent.map(a=>'<div class="ri" data-id="'+a.id+'"><span class="t">'+esc(a.title)+'</span>'+
+          '<span class="d">'+fmt(a.created)+' · '+a.views+' 阅</span></div>').join('')
+      : '<div class="empty" style="padding:18px">还没有文章</div>';
+    $('recentList').querySelectorAll('.ri').forEach(el=>{
+      el.style.cursor='pointer';
+      el.addEventListener('click',()=>openEditor(Number(el.dataset.id)));
+    });
+  }
+
+  /* ---------- 图片压缩与上传 ---------- */
+  function compressImage(file){
+    return new Promise(resolve=>{
+      if(!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 400*1024) return resolve(file);
+      const img=new Image();
+      const objUrl=URL.createObjectURL(file);
+      img.onload=()=>{
+        const MAX=1920;
+        const w=img.naturalWidth, h=img.naturalHeight;
+        if(Math.max(w,h)<=MAX && file.size<=1.2*1024*1024){ URL.revokeObjectURL(objUrl); return resolve(file); }
+        const scale=Math.min(1, MAX/Math.max(w,h));
+        const c=document.createElement('canvas');
+        c.width=Math.max(1,Math.round(w*scale));
+        c.height=Math.max(1,Math.round(h*scale));
+        const ctx=c.getContext('2d');
+        ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height);
+        ctx.drawImage(img,0,0,c.width,c.height);
+        URL.revokeObjectURL(objUrl);
+        c.toBlob(blob=>{
+          if(!blob || blob.size>=file.size) return resolve(file);
+          const name=file.name.replace(/\.(png|webp|jpe?g)$/i,'')+'.jpg';
+          try{ resolve(new File([blob],name,{type:'image/jpeg'})); }
+          catch(e){ blob.name=name; resolve(blob); }
+        },'image/jpeg',0.86);
+      };
+      img.onerror=()=>{ URL.revokeObjectURL(objUrl); resolve(file); };
+      img.src=objUrl;
+    });
+  }
+
+  function uploadImage(file){
+    return new Promise(async resolve=>{
+      if(!file) return resolve(null);
+      if(!/^image\/(png|jpeg|gif|webp)$/.test(file.type)){ toast('仅支持 PNG / JPG / GIF / WebP',true); return resolve(null); }
+      if(file.size>5*1024*1024){ toast('图片不能超过 5MB',true); return resolve(null); }
+
+      const mask=$('upMask'), fill=$('upFill'), pctEl=$('upPct'), sizeEl=$('upSize');
+      $('upTitle').textContent='正在处理图片…';
+      $('upName').textContent=file.name+'（原始 '+fmtSize(file.size)+'）';
+      fill.style.width='0%'; pctEl.textContent='0%'; sizeEl.textContent='';
+      mask.classList.add('show');
+
+      const original=file.size;
+      const out=await compressImage(file);
+      const shrunk=out.size<original;
+
+      $('upTitle').textContent='正在上传'+(shrunk?'（已压缩）':'');
+      if(shrunk) $('upName').textContent=file.name+'  ·  '+fmtSize(original)+' → '+fmtSize(out.size);
+
+      const fd=new FormData(); fd.append('file',out,out.name||'image');
+      const xhr=new XMLHttpRequest();
+      xhr.open('POST','/api/upload',true);
+      xhr.withCredentials=true;
+      const meter=makeMeter();
+
+      xhr.upload.onprogress=e=>{
+        if(!e.lengthComputable) return;
+        const p=Math.min(100,Math.round(e.loaded/e.total*100));
+        fill.style.width=p+'%'; pctEl.textContent=p+'%';
+        const sp=meter.sample(e.loaded);
+        const left=e.loaded<e.total?(' · 剩余 '+fmtLeft((e.total-e.loaded)/sp)):'';
+        sizeEl.textContent=fmtSize(e.loaded)+' / '+fmtSize(e.total)+' · '+fmtSize(sp)+'/s'+left;
+      };
+      xhr.onload=()=>{
+        mask.classList.remove('show');
+        let d={}; try{ d=JSON.parse(xhr.responseText); }catch(e){}
+        if(xhr.status<200||xhr.status>=300){ toast(d.error||('上传失败（'+xhr.status+'）'),true); return resolve(null); }
+        toast('✓ 上传完成  '+fmtSize(original)+(shrunk?' → '+fmtSize(out.size):''));
+        resolve(d.url);
+      };
+      xhr.onerror=()=>{ mask.classList.remove('show'); toast('网络中断，上传失败',true); resolve(null); };
+      xhr.onabort=()=>{ mask.classList.remove('show'); toast('上传已取消',true); resolve(null); };
+      xhr.send(fd);
+    });
+  }
+
+  function insertAtCursor(ta,text){
+    const s=ta.selectionStart,e=ta.selectionEnd,v=ta.value;
+    ta.value=v.slice(0,s)+text+v.slice(e);
+    ta.selectionStart=ta.selectionEnd=s+text.length; ta.focus();
+  }
+
+  /* ---------- 视频 ---------- */
+  async function loadVideos(){
+    try{
+      const res=await fetch('/api/admin/videos',{credentials:'same-origin',cache:'no-store'});
+      const d=await res.json();
+      if(!res.ok){ $('vidList').innerHTML='<div class="empty">'+esc(d.error||'读取失败')+'</div>'; return; }
+      if(d.maxMB) $('vidMax').textContent=d.maxMB;
+      $('vidDir').textContent='目录：'+(d.dir||'未配置（.env 里设置 LOCAL_VIDEO_DIR）');
+      const wb=$('vidWarn');
+      vidWritable = d.writable!==false;
+      vidWriteErr = d.writeErr||'';
+      if(d.writable===false){
+        const code=d.writeErr||'不可写';
+        let tip='在服务器上跑 <code>df -h</code> 看剩余空间，<code>sudo dmesg | tail -30</code> 看具体报错。';
+        if(/EROFS|read-only/i.test(code)) tip='文件系统被挂载成只读，通常是磁盘写满或 ext4 报错后自动切只读。先 <code>df -h</code> 看空间，再看 <code>sudo dmesg | tail -30</code>。';
+        else if(/ENOSPC|no space/i.test(code)) tip='磁盘满了。先清理 <code>journalctl --vacuum-size=100M</code>，或给虚拟机扩盘。';
+        else if(/EACCES|EPERM/i.test(code)) tip='权限不对，执行 <code>sudo chown -R blog:blog '+esc(d.dir||'')+'</code>。';
+        wb.style.display='';
+        wb.innerHTML='<span>⛔</span><div><b>视频目录写不进去（'+esc(code)+'），现在上传一定失败</b>'+
+          '路径 <code>'+esc(d.dir||'')+'</code>；'+tip+'</div>';
+      } else wb.style.display='none';
+      const vs=d.videos||[];
+      videoCount = vs.length;
+      $('navVidCount').textContent = vs.length;
+      $('vidCount').textContent = vs.length ? (vs.length+' 个 · '+fmtSize(d.totalBytes||0)) : '';
+      $('vidStat').textContent = vs.length ? ('共 '+fmtSize(d.totalBytes||0)) : '';
+      $('stVid').textContent = vs.length+' 个';
+      $('stVidSize').textContent = vs.length ? fmtSize(d.totalBytes||0) : '—';
+      if(!vs.length){
+        $('vidList').innerHTML='<div class="empty">'+esc(d.error||'还没有视频，上传一个试试～')+'</div>';
+        return;
+      }
+      $('vidList').innerHTML=vs.map((v,i)=>
+        '<div class="vrow">'+
+          '<span class="no">'+(i+1)+'</span>'+
+          '<span class="nm">'+esc(v.name)+'</span>'+
+          '<span class="mt">'+esc(fmtSize(v.size))+'</span>'+
+          '<span class="acts">'+
+            '<button class="mini" data-play="'+esc(v.name)+'">播放</button>'+
+            '<button class="mini danger" data-del="'+esc(v.name)+'">删除</button>'+
+          '</span>'+
+        '</div>'
+      ).join('');
+    }catch(e){ $('vidList').innerHTML='<div class="empty">读取失败：'+esc(e.message)+'</div>'; }
+  }
+
+  function uploadVideo(file){
+    return new Promise(resolve=>{
+      if(!file) return resolve(null);
+      if(!/\.(mp4|m4v|webm|mkv|mov|avi|flv|f4v|ts)$/i.test(file.name)){
+        toast('「'+file.name+'」格式不支持',true); return resolve(null);
+      }
+      // 目录写不进去就别开始传了，8MB 传两分钟再失败很折磨人
+      if(!vidWritable){
+        toast('视频目录不可写（'+vidWriteErr+'），先修磁盘再传',true); return resolve(null);
+      }
+      const mask=$('upMask'),fill=$('upFill'),pctEl=$('upPct'),sizeEl=$('upSize');
+      $('upTitle').textContent='正在上传视频…';
+      $('upName').textContent=file.name+'  ·  '+fmtSize(file.size);
+      fill.style.width='0%'; pctEl.textContent='0%'; sizeEl.textContent='';
+      mask.classList.add('show');
+
+      const xhr=new XMLHttpRequest();
+      xhr.open('POST','/api/admin/videos?name='+encodeURIComponent(file.name),true);
+      xhr.withCredentials=true;
+      xhr.setRequestHeader('Content-Type','application/octet-stream');
+      const meter=makeMeter();
+
+      xhr.upload.onprogress=e=>{
+        if(!e.lengthComputable) return;
+        const p=Math.min(100,Math.round(e.loaded/e.total*100));
+        fill.style.width=p+'%'; pctEl.textContent=p+'%';
+        const sp=meter.sample(e.loaded);
+        const left=e.loaded<e.total?(' · 剩余 '+fmtLeft((e.total-e.loaded)/sp)):'';
+        sizeEl.textContent=fmtSize(e.loaded)+' / '+fmtSize(e.total)+' · '+fmtSize(sp)+'/s'+left;
+      };
+      xhr.onload=()=>{
+        mask.classList.remove('show');
+        let d={}; try{ d=JSON.parse(xhr.responseText); }catch(e){}
+        if(xhr.status<200||xhr.status>=300){ toast(d.error||('上传失败（'+xhr.status+'）'),true); return resolve(null); }
+        toast('✓ 上传完成  '+d.name);
+        resolve(d.name);
+      };
+      xhr.onerror=()=>{ mask.classList.remove('show'); toast('网络中断，上传失败',true); resolve(null); };
+      xhr.onabort=()=>{ mask.classList.remove('show'); toast('上传已取消',true); resolve(null); };
+      xhr.send(file);
+    });
+  }
+
+  async function deleteVideo(name){
+    if(!confirm('确定删除视频「'+name+'」吗？\n文件会从服务器磁盘上删掉，不能恢复。')) return;
+    try{
+      const res=await fetch('/api/admin/videos?name='+encodeURIComponent(name),{method:'DELETE',credentials:'same-origin'});
+      const d=await res.json().catch(()=>({}));
+      if(!res.ok){ toast(d.error||('删除失败（'+res.status+'）'),true); return; }
+      toast('已删除 '+name);
+      await loadVideos();
+    }catch(e){ toast('删除失败：'+e.message,true); }
+  }
+
+  async function uploadVideoFiles(files){
+    if(!files||!files.length) return;
+    let ok=0;
+    for(const f of files){ if(await uploadVideo(f)) ok++; }
+    if(files.length>1) toast('✓ 完成 '+ok+' / '+files.length+' 个');
+    await loadVideos();
+  }
+
+  /* ---------- 日志 ---------- */
+  const LOG = { level:'all', kind:'all', q:'', before:0, limit:150, loaded:[] };
+
+  function hhmmss(ts){
+    const d=new Date(ts), p=n=>String(n).padStart(2,'0');
+    const now=new Date();
+    const hm=p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+    return d.toDateString()===now.toDateString() ? hm : (p(d.getMonth()+1)+'-'+p(d.getDate())+' '+hm);
+  }
+  function logRow(l){
+    return '<div class="lrow lv-'+l.level+'" title="'+esc(new Date(l.ts).toLocaleString())+'">'+
+      '<span class="lt">'+hhmmss(l.ts)+'</span>'+
+      '<span class="ll">'+l.level.toUpperCase()+'</span>'+
+      '<span class="lk">'+esc(l.kind)+'</span>'+
+      '<span class="lm">'+esc(l.msg)+'</span>'+
+      (l.ip?'<span class="li">'+esc(l.ip)+'</span>':'')+
+    '</div>';
+  }
+
+  async function loadLogs(reset, silent){
+    if(reset){ LOG.before=0; }
+    const qs=new URLSearchParams({level:LOG.level, kind:LOG.kind, q:LOG.q, limit:LOG.limit});
+    if(LOG.before) qs.set('before', LOG.before);
+    try{
+      const d=await api('/api/admin/logs?'+qs.toString());
+      const rows=d.logs||[];
+      $('lgTotal').textContent = (d.buffered!=null?d.buffered:rows.length);
+      $('lgWarn').textContent = d.counts?d.counts.warn:0;
+      $('lgErr').textContent = d.counts?d.counts.error:0;
+      $('navLogCount').textContent = d.counts?d.counts.error:0;
+      $('lgFile').textContent = fmtSize(d.file?d.file.size:0);
+      $('lgFilePath').textContent = d.file?String(d.file.path).split(/[\\/]/).slice(-2).join('/'):'—';
+      $('lgFilePath').title = d.file?d.file.path:'';
+      $('lgMeta').textContent = rows.length+' 条 · 缓冲上限 '+(d.bufferMax||'—');
+
+      // 类别下拉：第一次填，之后保持当前选中
+      const sel=$('lgKind');
+      if((d.kinds||[]).length && sel.options.length<=1){
+        sel.innerHTML='<option value="all">全部类别</option>'+
+          d.kinds.map(k=>'<option value="'+esc(k)+'">'+esc(k)+'</option>').join('');
+        sel.value=LOG.kind;
+      }
+
+      if(!rows.length){
+        $('logList').innerHTML='<div class="empty">'+(LOG.q||LOG.kind!=='all'||LOG.level!=='all'
+          ?'没有符合条件的日志':'还没有日志，动一动网站就会有了')+'</div>';
+        $('lgMore').disabled=true;
+        $('lgHint').textContent='';
+        return;
+      }
+      const html=rows.map(logRow).join('');
+      if(reset){
+        $('logList').innerHTML=html;
+        LOG.loaded=rows.slice();
+        $('logList').scrollTop=0;
+      }else if(!silent){
+        $('logList').insertAdjacentHTML('beforeend',html);
+        LOG.loaded=LOG.loaded.concat(rows);
+      }else{
+        // 自动刷新：只有用户还停在顶部时才整体替换，免得正看着旧日志被顶走
+        if($('logList').scrollTop<40){
+          $('logList').innerHTML=html;
+          LOG.loaded=rows.slice();
+        }
+        $('lgHint').textContent='已自动刷新 '+hhmmss(Date.now());
+        return;
+      }
+      $('lgHint').textContent='共 '+d.total+' 条匹配';
+      $('lgMore').disabled=!d.hasMore;
+    }catch(e){
+      if(!silent) $('logList').innerHTML='<div class="empty">读取失败：'+esc(e.message)+'</div>';
+    }
+  }
+
+  function bindLogs(){
+    $('lgLevel').addEventListener('click',e=>{
+      const b=e.target.closest('button[data-lv]'); if(!b) return;
+      $('lgLevel').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+      LOG.level=b.dataset.lv; loadLogs(true);
+    });
+    $('lgKind').addEventListener('change',e=>{ LOG.kind=e.target.value; loadLogs(true); });
+    let t;
+    $('lgQ').addEventListener('input',e=>{
+      clearTimeout(t);
+      t=setTimeout(()=>{ LOG.q=e.target.value.trim(); loadLogs(true); },280);
+    });
+    $('lgReload').addEventListener('click',()=>loadLogs(true));
+    $('lgAuto').addEventListener('click',()=>{
+      LOG_AUTO=!LOG_AUTO;
+      $('lgAuto').textContent=LOG_AUTO?'⏸ 暂停自动':'▶ 开启自动';
+      syncTimers('logs');
+      toast(LOG_AUTO?'已开启自动刷新（4 秒）':'已暂停自动刷新');
+    });
+    $('lgMore').addEventListener('click',()=>{
+      const oldest=LOG.loaded[LOG.loaded.length-1];
+      if(!oldest) return;
+      LOG.before=oldest.id;
+      loadLogs(false);
+    });
+    $('lgClear').addEventListener('click',async()=>{
+      if(!confirm('清空日志？内存缓冲和 data/blog.log 都会被清掉，不能恢复。')) return;
+      try{
+        const d=await api('/api/admin/logs',{method:'DELETE'});
+        toast('已清空 '+d.removed+' 条');
+        LOG.before=0; await loadLogs(true);
+      }catch(e){ toast('清空失败：'+e.message,true); }
+    });
+  }
+
+  /* ---------- 监控 ---------- */
+  function fmtDur(s){
+    s=Math.max(0,Math.floor(s||0));
+    const d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60);
+    if(d) return d+' 天 '+h+' 小时';
+    if(h) return h+' 小时 '+m+' 分';
+    if(m) return m+' 分 '+(s%60)+' 秒';
+    return s+' 秒';
+  }
+
+  function spark(svgId, points, key, max, color){
+    const svg=$(svgId);
+    if(!points||!points.length){
+      svg.innerHTML='<text x="150" y="38" text-anchor="middle" fill="#7f729a" font-size="10">暂无数据</text>';
+      return;
+    }
+    const W=300,H=70,pad=2;
+    const n=points.length;
+    const step=n>1?(W-pad*2)/(n-1):0;
+    const mx=Math.max(0.001,max);
+    const xy=points.map((p,i)=>{
+      const v=Math.max(0,Number(p[key])||0);
+      return [pad+i*step, H-pad-Math.min(1,v/mx)*(H-pad*2)];
+    });
+    const line=xy.map(a=>a[0].toFixed(1)+','+a[1].toFixed(1)).join(' ');
+    const area=line+' '+(pad+(n-1)*step).toFixed(1)+','+(H-pad)+' '+pad+','+(H-pad);
+    svg.innerHTML=
+      '<defs><linearGradient id="g-'+svgId+'" x1="0" y1="0" x2="0" y2="1">'+
+        '<stop offset="0%" stop-color="'+color+'" stop-opacity=".34"/>'+
+        '<stop offset="100%" stop-color="'+color+'" stop-opacity="0"/>'+
+      '</linearGradient></defs>'+
+      '<line x1="'+pad+'" y1="'+(H-pad)+'" x2="'+(W-pad)+'" y2="'+(H-pad)+'" stroke="rgba(255,255,255,.1)" stroke-width="1"/>'+
+      '<polygon points="'+area+'" fill="url(#g-'+svgId+')"/>'+
+      '<polyline points="'+line+'" fill="none" stroke="'+color+'" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<circle cx="'+xy[n-1][0].toFixed(1)+'" cy="'+xy[n-1][1].toFixed(1)+'" r="2.5" fill="'+color+'"/>';
+  }
+
+  /* ---------- 观测中心 ---------- */
+  const OBS = { auto:true, selected:new Set() };
+
+  function fmtAgo(ts){
+    const s=Math.max(0,Math.floor((Date.now()-ts)/1000));
+    if(s<60) return s+' 秒前';
+    if(s<3600) return Math.floor(s/60)+' 分钟前';
+    if(s<86400) return Math.floor(s/3600)+' 小时前';
+    return Math.floor(s/86400)+' 天前';
+  }
+
+  async function loadObservability(){
+    try{
+      const d=await api('/api/admin/observability');
+      const m=d.metrics||{}, r=m.req||{}, mem=m.mem||{}, c=m.cpu||{}, st=d.stats||{};
+
+      $('obsMeta').textContent='更新于 '+new Date(d.now).toLocaleTimeString()+' · '+fmtDur(m.uptime||0)+' · '+esc(m.host||'');
+      $('navBugCount').textContent=st.open||0;
+
+      // 服务健康
+      $('obsHealth').innerHTML=(d.health||[]).map(h=>
+        '<div class="health-item '+(h.ok?'ok':'bad')+'">'+
+          '<span class="dot"></span><div><div class="hn">'+esc(h.name)+'</div>'+
+          '<div class="hd">'+esc(h.detail)+'</div></div></div>').join('') || '<div class="empty">无数据</div>';
+
+      // 核心指标卡
+      $('mtUp').textContent=fmtDur(m.uptime||0);
+      $('mtBoot').textContent='启动于 '+new Date(m.bootAt).toLocaleString();
+      $('mtCpu').textContent=(c.pct||0).toFixed(1)+'%';
+      $('mtCpu').className=(c.pct>85?'c-err':c.pct>60?'c-warn':'');
+      $('mtLoad').textContent='负载 '+(c.load||[]).join(' / ')+' · '+c.cores+' 核 · 延迟 '+(c.lag||0)+'ms';
+      $('mtMem').textContent=(mem.pct||0).toFixed(1)+'%';
+      $('mtMemDetail').textContent=fmtSize(mem.used)+' / '+fmtSize(mem.total);
+      $('mtReq').textContent=(r.total||0).toLocaleString();
+      $('mtQps').textContent='约 '+(r.qps||0)+' 请求/秒 · 近1分钟 '+(r.lastMin||0)+' 次';
+      $('mtErr').textContent=(r.r5xx||0);
+      $('mtErr').className=r.r5xx>0?'c-err':'c-ok';
+      $('mtErrDetail').textContent='4xx '+(r.r4xx||0)+' · 2xx '+(r.ok||0);
+      $('mtAvg').textContent=(r.avgMs||0)+' ms';
+      $('mtMax').textContent='最慢 '+(r.maxMs||0)+' ms';
+      $('obsOpen').textContent=st.open||0;
+      $('obsBugDetail').textContent='24h 新增 '+(st.h24||0)+' · 前端 '+(st.client||0)+' / 后端 '+(st.server||0);
+      if(m.disk&&m.disk.data){
+        const dk=m.disk.data, pct=dk.total?Math.round(dk.used/dk.total*1000)/10:0;
+        $('mtDisk').textContent=pct+'%';
+        $('mtDisk').className=pct>90?'c-err':pct>80?'c-warn':'';
+        $('mtDiskDetail').textContent='可用 '+fmtSize(dk.free)+' / 共 '+fmtSize(dk.total);
+      }else{ $('mtDisk').textContent='—'; $('mtDiskDetail').textContent='不支持磁盘读取'; }
+
+      $('mtHost').textContent=(m.host||'')+' · '+(m.platform||'');
+      const db=m.db||{};
+      $('mtEnv').innerHTML=
+        esc(m.node||'')+' · PID <b>'+m.pid+'</b><br>'+
+        '数据库 <b>'+esc(db.file||'')+'（MySQL '+esc(db.sqlite||'')+' · '+fmtSize(db.size)+' · '+db.tables+' 表 / '+db.rows+' 行）</b><br>'+
+        '视频目录 <b>'+esc(m.video?.dir||'未配置')+'</b>（'+(m.video?.count||0)+' 个 · '+fmtSize(m.video?.bytes||0)+'）<br>'+
+        '日志：info '+m.logs?.info+' · warn '+m.logs?.warn+' · error '+m.logs?.error;
+
+      // 趋势图
+      spark('chartErr', d.trend||[], 'n', Math.max(1,...(d.trend||[]).map(p=>p.n)), '#ff9db4');
+      spark('chartCpu', m.history||[], 'cpu', 100, '#a78bfa');
+      spark('chartMem', m.history||[], 'mem', 100, '#f0a6d0');
+      const qmax=Math.max(1,...(m.history||[]).map(p=>p.qps));
+      spark('chartQps', m.history||[], 'qps', qmax, '#8fd9c2');
+      $('obsErrNow').textContent=(st.h24||0)+' / 24h';
+      $('obsTrendHint').textContent='Bug 近 3 小时 · 性能每 '+(m.interval||10)+' 秒采样 · '+(m.history||[]).length+' 点';
+
+      // Bug 排行
+      const groups=d.groups||[];
+      $('obsGroups').innerHTML=groups.length
+        ? groups.map(g=>'<div class="gbar" title="'+esc(g.message)+'">'+
+            '<span class="badge '+esc(g.source)+'">'+esc(g.source==='client'?'前端':'后端')+'</span>'+
+            (g.level==='fatal'?'<span class="badge fatal">致命</span>':'')+
+            '<span class="gmsg">'+esc(g.message)+'</span>'+
+            '<span class="gtime">'+esc(g.kind)+' · '+fmtAgo(g.last)+'</span>'+
+            '<span class="gnum">×'+g.count+'</span></div>').join('')
+        : '<div class="empty" style="padding:14px">还没有错误，站点很健康 ✧</div>';
+
+      // 数据库表健康
+      const tables=d.tables||[], maxB=Math.max(1,...tables.map(t=>t.bytes));
+      const totalB=tables.reduce((s,t)=>s+t.bytes,0);
+      $('obsDbHint').textContent=tables.length+' 张表 · 共 '+fmtSize(totalB);
+      $('obsTables').innerHTML=tables.map(t=>
+        '<div class="trow"><span class="tn">'+esc(t.name)+'</span>'+
+        '<span class="tb"><i style="width:'+Math.max(2,Math.round(t.bytes/maxB*100))+'%"></i></span>'+
+        '<span class="tv">'+fmtSize(t.bytes)+' · '+t.rows.toLocaleString()+' 行</span></div>').join('');
+
+      await loadErrors();
+    }catch(e){
+      $('obsMeta').textContent='读取失败：'+e.message;
+    }
+  }
+
+  const EF = { source:'all', level:'all', state:'all', q:'', qTimer:null };
+
+  async function loadErrors(){
+    try{
+      const q=new URLSearchParams({limit:'100',source:EF.source,level:EF.level,state:EF.state});
+      if(EF.q) q.set('q',EF.q);
+      const d=await api('/api/admin/errors?'+q.toString());
+      const rows=d.errors||[];
+      $('obsErrCount').textContent=rows.length+' 条'+(rows.length>=100?'（上限100）':'');
+      OBS.selected.clear();
+      $('obsErrors').innerHTML=rows.length
+        ? rows.map(e=>'<div class="erow'+(e.resolved?' resolved':'')+'" data-id="'+e.id+'">'+
+            '<div class="eh">'+
+              '<input type="checkbox" class="epick" data-id="'+e.id+'" />'+
+              '<span class="etime">'+new Date(e.ts).toLocaleString()+'</span>'+
+              '<span class="badge '+esc(e.source)+'">'+esc(e.source==='client'?'JS':'PHP')+'</span>'+
+              '<span class="k">'+esc(e.kind)+'</span>'+
+              '<span class="eflag '+(e.resolved?'done':'open')+'">'+(e.resolved?'已处理':'待处理')+'</span>'+
+              '<button class="mini edet" style="margin-left:auto">详情</button>'+
+            '</div>'+
+            '<div class="em">'+esc(e.message)+'</div>'+
+            '<div class="estack">'+esc(e.stack||'（无堆栈）')+'\n页面：'+esc(e.page||'—')+'</div>'+
+          '</div>').join('')
+        : '<div class="empty" style="padding:14px">没有符合条件的错误 ✧</div>';
+    }catch(e){
+      $('obsErrors').innerHTML='<div class="empty" style="padding:14px">读取失败：'+esc(e.message)+'</div>';
+    }
+  }
+
+  function bindObservability(){
+    $('obsRefresh').addEventListener('click',()=>loadObservability());
+    $('obsAuto').addEventListener('change',e=>{ OBS.auto=e.target.checked; syncTimers('monitor'); });
+    $('efSource').addEventListener('change',e=>{ EF.source=e.target.value; loadErrors(); });
+    $('efLevel').addEventListener('change',e=>{ EF.level=e.target.value; loadErrors(); });
+    $('efState').addEventListener('change',e=>{ EF.state=e.target.value; loadErrors(); });
+    $('efQ').addEventListener('input',e=>{
+      clearTimeout(EF.qTimer);
+      EF.qTimer=setTimeout(()=>{ EF.q=e.target.value.trim(); loadErrors(); },280);
+    });
+    $('obsErrors').addEventListener('click',async e=>{
+      const det=e.target.closest('.edet');
+      if(det){ det.closest('.erow').classList.toggle('open'); return; }
+      const pick=e.target.closest('.epick');
+      if(pick){
+        const id=Number(pick.dataset.id);
+        if(pick.checked) OBS.selected.add(id); else OBS.selected.delete(id);
+      }
+    });
+    $('efResolve').addEventListener('click',async()=>{
+      if(!OBS.selected.size){ toast('请先勾选要处理的错误',true); return; }
+      try{
+        const d=await api('/api/admin/errors/resolve',{method:'POST',body:JSON.stringify({ids:[...OBS.selected]})});
+        toast('已处理 '+d.updated+' 条'); loadObservability();
+      }catch(e){ toast('处理失败：'+e.message,true); }
+    });
+    $('efClear').addEventListener('click',async()=>{
+      if(!confirm('清空所有错误记录？这会影响 Bug 统计与排行，不能恢复。')) return;
+      try{
+        const d=await api('/api/admin/errors',{method:'DELETE'});
+        toast('已清空 '+d.removed+' 条'); loadObservability();
+      }catch(e){ toast('清空失败：'+e.message,true); }
+    });
+  }
+
+  /* ---------- 架构图：实时健康红绿灯 ---------- */
+  async function loadArchStatus(){
+    const stamp=$('archStatus');
+    const paint=(id,ok)=>{ const el=$(id); if(el) el.setAttribute('fill', ok?'#57d9a3':'#ff6b8a'); };
+    let ok=false;
+    try{
+      const r=await fetch('/healthz',{credentials:'same-origin',cache:'no-store'});
+      ok=r.ok;
+    }catch(e){ ok=false; }
+    paint('dot-app', ok); paint('dot-db', ok); paint('dot-disk', ok);
+    if(!ok){ stamp.textContent='服务未响应 · '+new Date().toLocaleTimeString(); return; }
+    try{
+      const s2=await api('/api/stats');
+      const bytes=Number(s2.uploadBytes)||0;
+      stamp.textContent='在线 · '+s2.total+' 篇文章 · 上传占用 '+(bytes>1048576?(bytes/1048576).toFixed(1)+' MB':(bytes/1024).toFixed(0)+' KB')+' · '+new Date().toLocaleTimeString();
+    }catch(e){
+      stamp.textContent='服务在线 · '+new Date().toLocaleTimeString();
+    }
+  }
+
+  /* ---------- 备份管理 ---------- */
+  .bk-hero{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:16px 18px;border-radius:12px;
+    background:linear-gradient(135deg,rgba(52,211,153,.10),rgba(167,139,250,.06));border:1px solid var(--line)}
+  .bk-hero .bk-ic{width:44px;height:44px;flex-shrink:0;border-radius:12px;display:grid;place-items:center;
+    font-size:22px;background:rgba(52,211,153,.15);color:#6ee7b7}
+  .bk-hero .bk-tx{flex:1;min-width:180px}
+  .bk-hero .bk-tx b{font-size:14px;display:block;margin-bottom:3px}
+  .bk-hero .bk-tx span{font-size:11.5px;color:var(--dim);line-height:1.6}
+  .bk-state{display:inline-flex;align-items:center;gap:6px;font-size:11px;padding:4px 10px;border-radius:20px;
+    background:rgba(255,255,255,.05);color:var(--dim);white-space:nowrap}
+  .bk-state i{width:7px;height:7px;border-radius:50%;background:#6ee7b7;box-shadow:0 0 0 3px rgba(110,231,183,.15)}
+  .bk-state.running i{background:#fbbf24;box-shadow:0 0 0 3px rgba(251,191,36,.15);animation:bkpulse 1s infinite}
+  .bk-state.failed i{background:#ff9db4;box-shadow:0 0 0 3px rgba(255,157,180,.15)}
+  @keyframes bkpulse{50%{opacity:.4}}
+  .bk-row{display:flex;align-items:center;gap:12px;padding:11px 14px;border-bottom:1px solid var(--line);font-size:12px}
+  .bk-row:last-child{border-bottom:none}
+  .bk-row:hover{background:rgba(255,255,255,.03)}
+  .bk-row .f{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--txt);font-size:11.5px}
+  .bk-row .sz{color:var(--dim);width:64px;flex-shrink:0;font-variant-numeric:tabular-nums}
+  .bk-row .tm{color:var(--dim);flex:1;font-variant-numeric:tabular-nums}
+  .bk-row .ops{display:flex;gap:7px;flex-shrink:0}
+  .bk-row .ops button{cursor:pointer;font-size:11px;padding:4px 10px;border-radius:7px;border:1px solid var(--line);
+    background:rgba(255,255,255,.04);color:var(--dim);transition:.15s}
+  .bk-row .ops button:hover{border-color:var(--violet);color:var(--txt)}
+  .bk-row .ops button.del:hover{border-color:#ff9db4;color:#ff9db4}
+  .bk-empty{padding:26px;text-align:center;color:var(--dim);font-size:12px}
+
+  /* ---------- SSH 控制台 ---------- */
+  .console-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 14px;margin-bottom:10px;
+    border-radius:10px;background:rgba(0,0,0,.2);border:1px solid var(--line);font-size:11.5px;color:var(--dim)}
+  .console-bar .dot{width:8px;height:8px;border-radius:50%;background:#6ee7b7;flex-shrink:0}
+  .console-bar .dot.off{background:#ff9db4}
+  .console-bar code{background:rgba(167,139,250,.12);color:#cbb8e8;padding:2px 7px;border-radius:5px;font-size:11px}
+  .console-frame{width:100%;height:560px;border:1px solid var(--line);border-radius:12px;background:#12121c;display:block}
+  .console-mask{position:absolute;inset:0;display:grid;place-items:center;background:rgba(18,18,28,.92);
+    color:var(--dim);font-size:13px;z-index:2;border-radius:12px}
+  .console-holder{position:relative}
+
+  .gbar{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;
+    border-bottom:1px solid var(--line);font-size:12px}
+  .gbar:last-child{border-bottom:none}
+  .gbar:hover{background:rgba(255,255,255,.03)}
+  .gbar .badge{flex-shrink:0;font-size:10px;padding:2px 7px;border-radius:6px;font-weight:700}
+  .badge.client{background:rgba(167,139,250,.2);color:#cbb8e8}
+  .badge.server{background:rgba(255,190,90,.18);color:#ffcf8a}
+  .badge.fatal{background:rgba(255,107,138,.2);color:#ff9db4}
+  .gbar .gmsg{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+  .gbar .gnum{flex-shrink:0;color:#ffcf8a;font-weight:700;font-variant-numeric:tabular-nums}
+  .gbar .gtime{flex-shrink:0;color:var(--dim);font-size:10.5px;font-variant-numeric:tabular-nums}
+  .erow{padding:10px 12px;border-radius:10px;border-bottom:1px solid var(--line);cursor:pointer}
+  .erow:last-child{border-bottom:none}
+  .erow:hover{background:rgba(255,255,255,.03)}
+  .erow.sel{background:rgba(167,139,250,.12);box-shadow:inset 0 0 0 1px rgba(167,139,250,.35)}
+  .erow.resolved{opacity:.5}
+  .erow .eh{display:flex;gap:8px;align-items:center;font-size:11px;margin-bottom:4px}
+  .erow .eh .etime{color:var(--dim);font-variant-numeric:tabular-nums}
+  .erow .em{font-size:12px;color:var(--ink);word-break:break-all;line-height:1.5}
+  .erow .estack{font-size:10.5px;color:#9b8db6;margin-top:5px;white-space:pre-wrap;word-break:break-all;
+    max-height:90px;overflow:auto;background:rgba(0,0,0,.22);border-radius:7px;padding:7px 9px;display:none}
+  .erow.open .estack{display:block}
+  .erow .eflag{flex-shrink:0;font-size:10px;padding:1px 6px;border-radius:5px}
+  .erow .eflag.open{background:rgba(255,107,138,.16);color:#ff9db4}
+  .erow .eflag.done{background:rgba(87,217,163,.14);color:#8fd9c2}
+  .trow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--line);font-size:12px}
+  .trow:last-child{border-bottom:none}
+  .trow .tn{font-family:ui-monospace,monospace;color:var(--ink);min-width:150px}
+  .trow .tb{flex:1;height:6px;border-radius:4px;background:rgba(255,255,255,.06);overflow:hidden}
+  .trow .tb i{display:block;height:100%;background:linear-gradient(90deg,var(--violet),var(--pink))}
+  .trow .tv{color:var(--dim);font-variant-numeric:tabular-nums;min-width:110px;text-align:right}
+  .pwd-form{max-width:460px;display:flex;flex-direction:column;gap:14px}
+  .pwd-form label{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--dim)}
+  .pwd-form label input{background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:10px;
+    padding:11px 13px;font-size:13px;color:var(--ink);outline:none}
+  .pwd-form label input:focus{border-color:var(--violet)}
+  .pwd-actions{display:flex;align-items:center;gap:14px;margin-top:4px}
+  .pwd-msg{font-size:12px}
+  .pwd-msg.ok{color:#8fd9c2}.pwd-msg.err{color:#ff9db4}
+  .mini.danger{color:#ff9db4;border-color:rgba(255,107,138,.3)}
+
+  /* ---------- 通用 ---------- */
+  #toast{position:fixed;left:50%;top:20px;transform:translate(-50%,-90px);z-index:90;
+    padding:11px 22px;border-radius:11px;font-size:13px;font-weight:600;opacity:0;
+    pointer-events:none;transition:.3s cubic-bezier(.4,0,.2,1);box-shadow:0 12px 34px rgba(8,3,18,.5);
+    background:linear-gradient(135deg,var(--violet),var(--pink));color:#2a1640}
+  #toast.show{transform:translate(-50%,0);opacity:1}
+  #toast.err{background:linear-gradient(135deg,#ff8fa8,#ff6b8b);color:#fff}
+
+  #upMask{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;
+    background:rgba(10,4,20,.6);backdrop-filter:blur(4px)}
+  #upMask.show{display:flex}
+  .up-card{width:min(410px,88vw);padding:20px 22px 18px;border-radius:16px;color:#fff;
+    background:linear-gradient(160deg,rgba(44,26,70,.98),rgba(24,12,40,.98));
+    border:1px solid rgba(167,139,250,.3);box-shadow:0 26px 64px rgba(0,0,0,.55)}
+  .up-card h4{margin:0 0 5px;font-size:14px;font-weight:700}
+  .up-name{font-size:11.5px;color:#b9a9d6;word-break:break-all;margin-bottom:12px;line-height:1.5}
+  .up-bar{height:7px;border-radius:99px;background:rgba(255,255,255,.13);overflow:hidden}
+  .up-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#a78bfa,#f0a6ca);transition:width .18s ease}
+  .up-meta{display:flex;justify-content:space-between;margin-top:9px;font-size:11.5px;color:#cbb8e8;
+    font-variant-numeric:tabular-nums}
+  .up-meta b{color:#fff}
+
+  @media(max-width:860px){
+    #app.show{display:block}                     /* 移动端不能再用 grid，否则侧栏会把整页撑宽 */
+    .side{position:static;height:auto;min-width:0;flex-direction:row;align-items:center;gap:8px;
+      padding:11px 10px;border-right:none;border-bottom:1px solid var(--line);overflow-x:auto}
+    .brand{padding:0;flex-shrink:0}
+    .brand>span{display:none}                    /* 手机上只留 ✦ 图标，把宽度让给六个导航 */
+    .nav{flex-direction:row;gap:3px;flex-shrink:0}
+    .nav button{width:auto;white-space:nowrap;padding:7px 9px;font-size:12px;gap:7px}
+    .nav button .cnt{display:none}
+    .side-foot{margin:0 0 0 auto;flex-direction:row;border:none;padding:0;gap:4px;flex-shrink:0}
+    .side-foot a{display:none}                  /* 手机上把「查看网站」收起来，给退出登录腾位置 */
+    .side-foot a,.side-foot button{font-size:11.5px;padding:7px 9px;white-space:nowrap}
+    .main{padding:18px 13px 60px}
+    .topbar{margin-bottom:18px}
+    .topbar h1{font-size:19px}
+    .topbar .desc{display:none}
+    .top-actions{margin-left:0;width:100%}
+    .tbtn{flex:1 1 auto;text-align:center;padding:9px 10px}
+    .cards{grid-template-columns:repeat(2,1fr)}
+    .card b{font-size:19px}
+    .alist{max-height:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- 登录 -->
+<div id="loginView">
+  <form class="login-card" id="loginForm">
+    <div class="ico">🔐</div>
+    <h1>管理后台</h1>
+    <p>模糊二维码 · 内容工作室</p>
+    <input type="password" id="pw" placeholder="请输入管理密码" autocomplete="current-password" required />
+    <button type="submit">进入</button>
+    <div class="hint">密码在服务器 <code>.env</code> 里配置。<br>忘了就执行 <code>node tools/hash-password.js '新密码'</code> 写回后重启服务。</div>
+  </form>
+</div>
+
+<!-- 后台 -->
+<div id="app">
+  <aside class="side">
+    <div class="brand">
+      <span class="mark">✦</span>
+      <span>模糊二维码<small>CONTENT STUDIO</small></span>
+    </div>
+    <nav class="nav">
+      <button data-view="overview" class="on"><span class="ic">▤</span>概览</button>
+      <button data-view="articles"><span class="ic">✎</span>文章<span class="cnt" id="navArtCount">0</span></button>
+      <button data-view="videos"><span class="ic">▷</span>小影院<span class="cnt" id="navVidCount">0</span></button>
+      <button data-view="danmaku"><span class="ic">✺</span>弹幕<span class="cnt" id="navDmCount">0</span></button>
+      <button data-view="db"><span class="ic">▦</span>数据库<span class="cnt" id="navDbCount">0</span></button>
+      <button data-view="logs"><span class="ic">≡</span>日志<span class="cnt" id="navLogCount">0</span></button>
+      <button data-view="arch"><span class="ic">◈</span>架构图</button>
+      <button data-view="backup"><span class="ic">▣</span>备份管理</button>
+      <button data-view="settings"><span class="ic">⚙</span>设置</button>
+    </nav>
+    <div class="side-foot">
+      <a href="/" target="_blank" rel="noopener">↗ 查看网站</a>
+      <button id="btnLogout">退出登录</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h1 id="pageTitle">概览</h1>
+      <span class="desc" id="pageDesc"></span>
+      <div class="top-actions">
+        <button class="tbtn" id="btnExport">导出备份</button>
+        <button class="tbtn" id="btnImport">导入备份</button>
+        <button class="tbtn primary" id="btnNew">＋ 写新文章</button>
+      </div>
+    </div>
+
+    <!-- 概览 -->
+    <section class="view on" id="view-overview">
+      <div class="cards">
+        <div class="card"><span class="k">文章总数</span><b id="stTotal">0</b></div>
+        <div class="card"><span class="k">已发布</span><b id="stPub">0</b></div>
+        <div class="card"><span class="k">草稿</span><b id="stDraft">0</b></div>
+        <div class="card"><span class="k">总阅读</span><b id="stViews">0</b></div>
+        <div class="card"><span class="k">图片占用</span><b id="stImg">0 B</b></div>
+        <div class="card"><span class="k">视频</span><b id="stVid">0 个</b><em id="stVidSize">—</em></div>
+        <div class="card"><span class="k">弹幕</span><b id="stDm">0 条</b><em>游客发的内容</em></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">快捷操作</div>
+        <div class="panel-body quick">
+          <button data-go="articles" data-new="1">✎ 写一篇新文章</button>
+          <button data-go="videos">▷ 上传视频到小影院</button>
+          <button data-go="danmaku">✺ 查看与管理弹幕</button>
+          <button data-go="db">▦ 数据库与备份</button>
+          <a class="quicklink" href="/" target="_blank" rel="noopener">↗ 打开网站首页</a>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">最近文章<span class="sp" id="recentHint"></span></div>
+        <div class="panel-body recent" id="recentList"><div class="loading">加载中…</div></div>
+      </div>
+    </section>
+
+    <!-- 文章 -->
+    <section class="view" id="view-articles">
+      <div class="two">
+        <div class="panel">
+          <div class="panel-head">文章<span class="sp" id="listCount"></span></div>
+          <div class="panel-body" style="padding-bottom:10px">
+            <input class="search" id="q" type="text" placeholder="搜索标题或标签…" />
+          </div>
+          <div class="alist" id="alist"><div class="loading">加载中…</div></div>
+        </div>
+
+        <div class="panel" id="editorPanel">
+          <div class="panel-head">✍️ <span id="editorTitle">写新文章</span></div>
+          <div class="editor">
+            <div class="field">
+              <label>标题</label>
+              <input type="text" id="fTitle" placeholder="给文章起个标题…" maxlength="200" />
+            </div>
+            <div class="field">
+              <label>标签</label>
+              <input type="text" id="fTag" placeholder="如：技术 / 随笔 / 生活" maxlength="60" />
+            </div>
+            <div class="field">
+              <label>封面图</label>
+              <div class="cover-row">
+                <div class="cover-prev" id="coverPrev">暂无封面</div>
+                <div class="upload-btns">
+                  <button class="ubtn" id="btnCover" type="button">⬆️ 上传封面</button>
+                  <button class="ubtn danger" id="btnCoverClear" type="button">✕ 移除</button>
+                  <div class="tip" style="width:100%">PNG / JPG / GIF / WebP，会自动压到 1920px 内再传</div>
+                </div>
+              </div>
+            </div>
+            <div class="field">
+              <label>正文</label>
+              <textarea id="fBody" placeholder="在这里写下文章内容…支持 # 标题、- 列表、> 引用、**加粗**"></textarea>
+              <div class="tip">
+                <button class="ubtn" id="btnBodyImg" type="button" style="padding:7px 11px;font-size:11.5px">🖼️ 插入图片</button>
+                <span style="margin-left:8px">插入后会出现在光标处</span>
+              </div>
+            </div>
+            <div class="field" style="display:flex;align-items:center;gap:9px;margin-bottom:0">
+              <input type="checkbox" id="fPublish" checked style="width:15px;height:15px;accent-color:#a78bfa;margin:0" />
+              <label for="fPublish" style="margin:0;font-size:12.5px;color:var(--ink)">发布到前台</label>
+              <span class="tip" style="margin:0;font-size:11px">取消勾选则存为草稿</span>
+            </div>
+            <div class="editor-actions">
+              <button class="save" id="btnSave" type="button">💾 保存</button>
+              <button class="del" id="btnDelete" type="button" disabled>🗑️ 删除</button>
+              <span class="mode-tag" id="modeTag">新建</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 视频 -->
+    <section class="view" id="view-videos">
+      <div class="panel">
+        <div class="panel-head">上传<span class="sp" id="vidStat"></span></div>
+        <div class="panel-body">
+          <div class="vid-drop" id="vidDrop">
+            <b>把视频拖到这里</b>，或点下面的按钮选择（可多选）<br>
+            mp4 / webm / mkv / mov / avi，单个最大 <span id="vidMax">4096</span> MB
+          </div>
+          <div class="vid-tools">
+            <button class="ubtn" id="btnVidPick" type="button">⬆️ 选择视频</button>
+            <button class="ubtn" id="btnVidRefresh" type="button">↻ 刷新</button>
+            <span class="dir" id="vidDir">目录：—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="warnbox" id="vidWarn" style="display:none"></div>
+
+      <div class="panel">
+        <div class="panel-head">视频列表<span class="sp" id="vidCount"></span></div>
+        <div class="panel-body" id="vidList"><div class="loading">加载中…</div></div>
+      </div>
+    </section>
+
+    <!-- 弹幕 -->
+    <section class="view" id="view-danmaku">
+      <div class="cards">
+        <div class="card"><span class="k">弹幕总数</span><b id="dmTotal">—</b><em id="dmVideos">— 个视频</em></div>
+        <div class="card"><span class="k">涉及视频</span><b id="dmVideoCount">—</b><em id="dmOrphan">孤立弹幕 — 条</em></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          按视频查看
+          <span class="sp"><button class="lnk danger" id="btnDmClearAll" type="button">清空全部弹幕</button></span>
+        </div>
+        <div class="panel-body" id="dmVideoList"><div class="loading">加载中…</div></div>
+      </div>
+
+      <div class="panel" id="dmDetailPanel" style="display:none">
+        <div class="panel-head">
+          <span id="dmDetailTitle">弹幕明细</span>
+          <span class="sp">
+            <input class="q" id="dmQ" type="search" placeholder="搜索弹幕内容" />
+            <button class="lnk danger" id="btnDmClearOne" type="button">清空此视频</button>
+          </span>
+        </div>
+        <div class="panel-body" id="dmRows"><div class="loading">加载中…</div></div>
+        <div class="pager" id="dmPager"></div>
+      </div>
+    </section>
+
+    <!-- 数据库 -->
+    <section class="view" id="view-db">
+      <div class="cards">
+        <div class="card"><span class="k">数据库大小</span><b id="dbSize">—</b><em id="dbPath">—</em></div>
+        <div class="card"><span class="k">WAL 日志</span><b id="dbWal">—</b><em>检查点后可归零</em></div>
+        <div class="card"><span class="k">数据表</span><b id="dbTableCount">—</b><em>articles / danmaku …</em></div>
+        <div class="card"><span class="k">总记录</span><b id="dbRows">—</b><em>所有表合计</em></div>
+        <div class="card"><span class="k">SQLite</span><b id="dbVer">—</b><em>服务端驱动版本</em></div>
+        <div class="card"><span class="k">页大小</span><b id="dbPageSize">—</b><em>页数决定增长方式</em></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">数据表<span class="sp">点「浏览」看内容，点「CSV」导出这一张表</span></div>
+        <div class="panel-body" id="dbTables"><div class="loading">读取中…</div></div>
+      </div>
+
+      <div class="panel" id="dbBrowsePanel" style="display:none">
+        <div class="panel-head">
+          数据浏览 · <code id="dbBrowseName" style="font-size:12px;color:var(--violet)">—</code>
+          <span class="sp" id="dbGridMeta"></span>
+        </div>
+        <div class="panel-body" style="padding-bottom:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input class="search" id="dbSearch" type="text" placeholder="在本表里搜索…" style="flex:1 1 200px;margin:0" />
+          <button class="mini" id="dbReload">↻ 刷新</button>
+          <button class="mini" id="dbClose">✕ 关闭</button>
+        </div>
+        <div class="dbwrap"><table class="dbtable" id="dbGrid"></table></div>
+        <div class="pager" id="dbPager"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">备份与维护<span class="sp">备份是完整快照，导出的是纯文本，可直接用 Excel 打开</span></div>
+        <div class="panel-body">
+          <div class="dbtools">
+            <a class="ubtn" id="dbDownload" href="/api/admin/db/export?type=db">⬇ 下载数据库备份</a>
+            <button class="ubtn" id="dbVacuum">🧹 压缩回收空间</button>
+            <button class="ubtn" id="dbCheckpoint">💧 合并 WAL 日志</button>
+            <button class="ubtn danger" id="dbOrphan">🗑️ 清理孤立弹幕</button>
+          </div>
+          <div class="tip" style="margin-top:10px">
+            备份会用 <code>VACUUM INTO</code> 生成一致性快照，含 WAL 里尚未合并的数据，不会拿到半个库。<br>
+            压缩（VACUUM）会重写整个库，空间不足时可能失败；孤立弹幕指对应视频已删除的弹幕。
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">只读查询<span class="sp" id="dbSqlMeta"></span></div>
+        <div class="panel-body">
+          <textarea class="sqlbox" id="dbSql" spellcheck="false"
+            placeholder="SELECT * FROM articles ORDER BY created_at DESC LIMIT 20"></textarea>
+          <div class="dbtools" style="margin-top:10px">
+            <button class="ubtn" id="dbRun">▶ 执行（Ctrl+Enter）</button>
+            <button class="ubtn" id="dbExample" data-sql="SELECT id,title,tag,published,views FROM articles ORDER BY created_at DESC LIMIT 20">示例：文章列表</button>
+            <button class="ubtn" id="dbExample2" data-sql="SELECT video, COUNT(*) AS 条数 FROM danmaku GROUP BY video ORDER BY 条数 DESC">示例：弹幕统计</button>
+          </div>
+          <div class="tip" style="margin-top:10px">只允许 <code>SELECT</code> / <code>WITH</code> / <code>EXPLAIN</code>，最多返回 200 行。写操作请用上面的前台功能。</div>
+          <div class="dbwrap" id="dbSqlOut" style="margin:12px 0 0"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 日志 -->
+    <section class="view" id="view-logs">
+      <div class="cards">
+        <div class="card"><span class="k">内存缓冲</span><b id="lgTotal">0</b><em>最新的一批，刷新即更新</em></div>
+        <div class="card"><span class="k">警告</span><b id="lgWarn" class="c-warn">0</b><em>4xx / 删除 / 降级</em></div>
+        <div class="card"><span class="k">错误</span><b id="lgErr" class="c-err">0</b><em>5xx 与异常堆栈</em></div>
+        <div class="card"><span class="k">日志文件</span><b id="lgFile">—</b><em id="lgFilePath">—</em></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">筛选<span class="sp" id="lgMeta"></span></div>
+        <div class="panel-body">
+          <div class="logbar">
+            <div class="seg" id="lgLevel">
+              <button class="on" data-lv="all">全部</button>
+              <button data-lv="warn+">警告+</button>
+              <button data-lv="error">错误</button>
+            </div>
+            <select class="search" id="lgKind" style="flex:0 0 auto;width:auto">
+              <option value="all">全部类别</option>
+            </select>
+            <input class="search" id="lgQ" type="text" placeholder="搜内容或 IP…" style="flex:1 1 160px;margin:0" />
+            <button class="mini" id="lgReload">↻ 刷新</button>
+            <button class="mini" id="lgAuto">⏸ 暂停自动</button>
+          </div>
+        </div>
+        <div class="logbox" id="logList"><div class="loading">加载中…</div></div>
+        <div class="pager">
+          <button id="lgMore">加载更早</button>
+          <span style="margin-right:auto" id="lgHint"></span>
+          <a class="mini" href="/api/admin/logs/export">⬇ 下载日志</a>
+          <button class="mini danger" id="lgClear">🗑 清空</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 观测中心（阿里云 ARMS 风格） -->
+    <section class="view" id="view-monitor">
+      <div class="obs-bar">
+        <span class="obs-live"><i></i>实时观测</span>
+        <span class="obs-meta" id="obsMeta">—</span>
+        <div class="obs-bar-actions">
+          <button class="mini" id="obsRefresh">↻ 刷新</button>
+          <label class="mini-chk"><input type="checkbox" id="obsAuto" checked /> 自动刷新</label>
+        </div>
+      </div>
+
+      <!-- 服务健康探测 -->
+      <div class="panel">
+        <div class="panel-head">服务健康 <span class="sp">依赖组件实时探测</span></div>
+        <div class="panel-body">
+          <div class="health-grid" id="obsHealth"><div class="loading">加载中…</div></div>
+        </div>
+      </div>
+
+      <!-- 核心指标卡 -->
+      <div class="cards obs-cards">
+        <div class="card"><span class="k">运行时长</span><b id="mtUp">—</b><em id="mtBoot">—</em></div>
+        <div class="card"><span class="k">CPU 占用</span><b id="mtCpu">—</b><em id="mtLoad">负载 —</em></div>
+        <div class="card"><span class="k">系统内存</span><b id="mtMem">—</b><em id="mtMemDetail">—</em></div>
+        <div class="card"><span class="k">请求总数</span><b id="mtReq">—</b><em id="mtQps">—</em></div>
+        <div class="card"><span class="k">平均响应</span><b id="mtAvg">—</b><em id="mtMax">—</em></div>
+        <div class="card"><span class="k">错误响应</span><b id="mtErr" class="c-ok">—</b><em id="mtErrDetail">—</em></div>
+        <div class="card card-alert"><span class="k">待处理 Bug</span><b id="obsOpen">—</b><em id="obsBugDetail">—</em></div>
+        <div class="card"><span class="k">磁盘已用</span><b id="mtDisk">—</b><em id="mtDiskDetail">—</em></div>
+      </div>
+
+      <!-- 错误趋势 + 性能趋势 -->
+      <div class="panel">
+        <div class="panel-head">错误趋势 <span class="sp" id="obsTrendHint">近 3 小时，按 5 分钟聚合</span></div>
+        <div class="panel-body">
+          <div class="charts">
+            <div class="chart">
+              <div class="ct"><span>Bug 上报数</span><b id="obsErrNow">0</b></div>
+              <svg id="chartErr" class="chart-svg" viewBox="0 0 300 70" preserveAspectRatio="none"></svg>
+            </div>
+            <div class="chart">
+              <div class="ct"><span>CPU 占用</span><b id="cCpu">0%</b></div>
+              <svg id="chartCpu" class="chart-svg" viewBox="0 0 300 70" preserveAspectRatio="none"></svg>
+            </div>
+            <div class="chart">
+              <div class="ct"><span>系统内存</span><b id="cMem">0%</b></div>
+              <svg id="chartMem" class="chart-svg" viewBox="0 0 300 70" preserveAspectRatio="none"></svg>
+            </div>
+            <div class="chart">
+              <div class="ct"><span>请求 / 秒</span><b id="cQps">0</b></div>
+              <svg id="chartQps" class="chart-svg" viewBox="0 0 300 70" preserveAspectRatio="none"></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bug 排行榜（按错误指纹聚合） -->
+      <div class="panel">
+        <div class="panel-head">Bug 排行 <span class="sp">相同错误自动归并，按出现次数排序</span></div>
+        <div class="panel-body" id="obsGroups"><div class="loading">加载中…</div></div>
+      </div>
+
+      <!-- 错误明细 -->
+      <div class="panel">
+        <div class="panel-head">
+          错误明细 <span class="sp" id="obsErrCount">—</span>
+          <div class="head-actions">
+            <select id="efSource"><option value="all">全部来源</option><option value="client">前端 JS</option><option value="server">后端 PHP</option></select>
+            <select id="efLevel"><option value="all">全部级别</option><option value="error">错误+</option><option value="warn">警告</option><option value="info">信息</option></select>
+            <select id="efState"><option value="all">全部状态</option><option value="open">待处理</option><option value="resolved">已处理</option></select>
+            <input id="efQ" type="search" placeholder="搜索错误信息…" />
+            <button class="mini" id="efResolve">✓ 标记已处理</button>
+            <button class="mini danger" id="efClear">清空</button>
+          </div>
+        </div>
+        <div class="panel-body" id="obsErrors"><div class="loading">加载中…</div></div>
+      </div>
+
+      <!-- 数据库表健康 -->
+      <div class="panel">
+        <div class="panel-head">数据库健康 <span class="sp" id="obsDbHint">—</span></div>
+        <div class="panel-body" id="obsTables"><div class="loading">加载中…</div></div>
+      </div>
+
+      <!-- 服务端信息 -->
+      <div class="panel">
+        <div class="panel-head">运行环境 <span class="sp" id="mtHost"></span></div>
+        <div class="panel-body"><div class="tip" id="mtEnv" style="line-height:2"></div></div>
+      </div>
+    </section>
+
+    <!-- 架构图 -->
+    <section class="view" id="view-arch">
+      <div class="panel">
+        <div class="panel-head">Windows 单机版架构 <span class="sp" id="archStatus">实时状态载入中…</span></div>
+        <div class="panel-body">
+          <div class="arch-wrap">
+            <svg viewBox="0 0 1040 470" role="img" aria-label="Windows 单机版架构图" xmlns="http://www.w3.org/2000/svg"
+                 font-family="-apple-system,BlinkMacSystemFont,'Segoe UI','Microsoft YaHei',sans-serif">
+              <defs>
+                <marker id="wArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M1 1L9 5L1 9" fill="none" stroke="#a78bfa" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </marker>
+                <linearGradient id="wApp" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#2b2350"/><stop offset="1" stop-color="#241d44"/>
+                </linearGradient>
+                <linearGradient id="wStore" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#1e2b47"/><stop offset="1" stop-color="#1a2440"/>
+                </linearGradient>
+              </defs>
+
+              <text x="520" y="30" text-anchor="middle" font-size="15" font-weight="700" fill="#f4ecff">一个进程 · 一个数据库文件 · 零第三方依赖</text>
+              <text x="520" y="50" text-anchor="middle" font-size="10.5" fill="#a99cc4">浏览器请求进来，Node 自己既当 Web 服务器又当 API，数据写进本机 SQLite</text>
+
+              <!-- 浏览器 -->
+              <rect x="420" y="70" width="200" height="52" rx="10" fill="#3a2358" stroke="#6b4a9e" stroke-width="1.2"/>
+              <text x="520" y="92" text-anchor="middle" font-size="11.5" font-weight="600" fill="#e9dcff">浏览器 / 访客</text>
+              <text x="520" y="110" text-anchor="middle" font-size="9" fill="#bda8dd">首页 · 文章 · 小影院 · 后台</text>
+
+              <line x1="520" y1="122" x2="520" y2="152" stroke="#a78bfa" stroke-width="1.6" marker-end="url(#wArrow)"/>
+              <text x="532" y="143" font-size="8.5" fill="#a99cc4">HTTP :8080</text>
+
+              <!-- Node 主框 -->
+              <rect x="180" y="152" width="680" height="132" rx="12" fill="url(#wApp)" stroke="#5b4a8f" stroke-width="1.3"/>
+              <circle id="dot-app" cx="838" cy="172" r="4.5" fill="#6b5a8f"/>
+              <text x="200" y="176" font-size="12" font-weight="700" fill="#efe6ff">Node.js 22 · server.js（单进程）</text>
+              <text x="200" y="192" font-size="9" fill="#a99cc4">只依赖 Node 内置模块，不需要 Apache / MySQL / PHP</text>
+
+              <rect x="200" y="204" width="148" height="62" rx="8" fill="#332a5c" stroke="#4d3f7d"/>
+              <text x="274" y="226" text-anchor="middle" font-size="9.5" font-weight="600" fill="#e6dbff">静态页面</text>
+              <text x="274" y="243" text-anchor="middle" font-size="8.5" fill="#b3a3d4">HTML / CSS / JS</text>
+              <text x="274" y="257" text-anchor="middle" font-size="8.5" fill="#b3a3d4">视频 · 图片直出</text>
+
+              <rect x="366" y="204" width="148" height="62" rx="8" fill="#332a5c" stroke="#4d3f7d"/>
+              <text x="440" y="226" text-anchor="middle" font-size="9.5" font-weight="600" fill="#e6dbff">JSON API</text>
+              <text x="440" y="243" text-anchor="middle" font-size="8.5" fill="#b3a3d4">/api/* 路由</text>
+              <text x="440" y="257" text-anchor="middle" font-size="8.5" fill="#b3a3d4">文章 · 弹幕 · 上传</text>
+
+              <rect x="532" y="204" width="148" height="62" rx="8" fill="#332a5c" stroke="#4d3f7d"/>
+              <text x="606" y="226" text-anchor="middle" font-size="9.5" font-weight="600" fill="#e6dbff">会话与防护</text>
+              <text x="606" y="243" text-anchor="middle" font-size="8.5" fill="#b3a3d4">Cookie 签名</text>
+              <text x="606" y="257" text-anchor="middle" font-size="8.5" fill="#b3a3d4">同源校验 · 登录限流</text>
+
+              <rect x="698" y="204" width="148" height="62" rx="8" fill="#332a5c" stroke="#4d3f7d"/>
+              <text x="772" y="226" text-anchor="middle" font-size="9.5" font-weight="600" fill="#e6dbff">日志与指标</text>
+              <text x="772" y="243" text-anchor="middle" font-size="8.5" fill="#b3a3d4">内存环形缓冲</text>
+              <text x="772" y="257" text-anchor="middle" font-size="8.5" fill="#b3a3d4">落盘轮转 · 采样</text>
+
+              <!-- 两条落盘箭头 -->
+              <path d="M400 284 L400 310 L330 310 L330 326" fill="none" stroke="#6aa9ff" stroke-width="1.5" marker-end="url(#wArrow)"/>
+              <path d="M640 284 L640 310 L710 310 L710 326" fill="none" stroke="#6aa9ff" stroke-width="1.5" marker-end="url(#wArrow)"/>
+
+              <!-- SQLite -->
+              <rect x="180" y="326" width="300" height="96" rx="10" fill="url(#wStore)" stroke="#3f5f8f" stroke-width="1.2"/>
+              <circle id="dot-db" cx="460" cy="344" r="4.5" fill="#4a6a94"/>
+              <text x="200" y="352" font-size="11" font-weight="600" fill="#d8e6ff">SQLite · data/blog.db</text>
+              <text x="200" y="372" font-size="9" fill="#93a9c9">文章、弹幕、访问量、错误记录</text>
+              <text x="200" y="388" font-size="9" fill="#93a9c9">WAL 模式，读写互不阻塞</text>
+              <text x="200" y="406" font-size="8.5" fill="#7d94b3">后台「数据库」页可直接查表、导出 CSV</text>
+
+              <!-- 文件目录 -->
+              <rect x="560" y="326" width="300" height="96" rx="10" fill="url(#wStore)" stroke="#3f5f8f" stroke-width="1.2"/>
+              <circle id="dot-disk" cx="840" cy="344" r="4.5" fill="#4a6a94"/>
+              <text x="580" y="352" font-size="11" font-weight="600" fill="#d8e6ff">本地目录</text>
+              <text x="580" y="372" font-size="9" fill="#93a9c9">uploads/ 图片 · videos/ 视频</text>
+              <text x="580" y="388" font-size="9" fill="#93a9c9">backups/ 数据库快照</text>
+              <text x="580" y="406" font-size="8.5" fill="#7d94b3">整个项目目录拷走就能搬家</text>
+
+              <!-- 可选前置 -->
+              <text x="520" y="448" text-anchor="middle" font-size="8.5" fill="#7f719c">可选：前面加一层 Nginx（deploy/nginx.conf）做 HTTPS 与压缩；用 systemd 常驻（deploy/blog.service）；Windows 下直接双击启动即可</text>
+            </svg>
+          </div>
+
+          <div class="ts-wrap">
+            <div class="ts-head">
+              <b>技术栈</b>
+              <span>这个版本真正用到的东西，一共 4 组</span>
+            </div>
+            <div class="ts-row"><span class="ts-cat">运行时</span><span class="ts-items">
+              <span class="ts-i"><b>Node.js</b> 22 LTS</span>
+              <span class="ts-i"><b>node:http</b> 原生服务</span>
+              <span class="ts-i"><b>node:sqlite</b> 内置驱动</span>
+              <span class="ts-i"><b>scrypt</b> 密码哈希</span>
+              <span class="ts-i"><b>零依赖</b> 无 npm 包</span>
+            </span></div>
+            <div class="ts-row"><span class="ts-cat">数据</span><span class="ts-items">
+              <span class="ts-i"><b>SQLite</b> 单文件库</span>
+              <span class="ts-i"><b>WAL</b> 日志模式</span>
+              <span class="ts-i"><b>JSON</b> 导入导出</span>
+              <span class="ts-i"><b>文件快照</b> 备份</span>
+            </span></div>
+            <div class="ts-row"><span class="ts-cat">前端</span><span class="ts-items">
+              <span class="ts-i"><b>原生 HTML/CSS/JS</b> 无构建</span>
+              <span class="ts-i"><b>视频背景</b> 首页</span>
+              <span class="ts-i"><b>Markdown</b> 子集渲染</span>
+              <span class="ts-i"><b>弹幕</b> Canvas</span>
+            </span></div>
+            <div class="ts-row"><span class="ts-cat">部署</span><span class="ts-items">
+              <span class="ts-i"><b>直接运行</b> npm start</span>
+              <span class="ts-i"><b>systemd</b> 常驻</span>
+              <span class="ts-i"><b>Nginx</b> 可选前置</span>
+              <span class="ts-i"><b>一键脚本</b> deploy/install.sh</span>
+            </span></div>
+          </div>
+
+          <div class="arch-notes">
+            <p><b>看这张图要知道的三件事</b></p>
+            <p>① 没有中间件：Node 进程同时负责静态文件、API、会话，挂一个进程就全挂，但也不用维护 Apache/MySQL。</p>
+            <p>② 数据只有一处：<code>data/blog.db</code>。备份就是复制这个文件，恢复到任意机器把文件放回去即可。</p>
+            <p>③ 想要 K8s、MySQL、异地备份、SSH 控制台那套，请看另一个仓库 <code>blur-qr-blog-Ubuntu</code>。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 备份管理 -->
+    <section class="view" id="view-backup">
+      <div class="bk-hero">
+        <div class="bk-ic">▣</div>
+        <div class="bk-tx">
+          <b>SQLite 数据库备份</b>
+          <span>点「立即备份」把 data/blog.db 打成一份完整快照存到 backups/，保留最近 30 份。备份是同步完成的，页面刷新即可看到。</span>
+        </div>
+        <span class="bk-state" id="bkState"><i></i><span id="bkStateText">就绪</span></span>
+        <button class="tbtn primary" id="bkRun">立即备份</button>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <div class="panel-head">备份文件 <span class="sp" id="bkCount">加载中…</span></div>
+        <div class="panel-body" style="padding:0" id="bkList">
+          <div class="bk-empty">加载中…</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">说明</div>
+        <div class="panel-body">
+          <div class="tip" style="line-height:2">
+            · 备份是完整数据库文件（含建表与数据），停止服务后把它覆盖回 <code>data/blog.db</code> 即可恢复。<br>
+            · 备份存在项目的 <code>backups/</code> 目录，默认只留在本机；需要异地副本就把它同步到网盘或另一台机器。<br>
+            · 下载得到 <code>.db</code> 文件，可用任意 SQLite 客户端打开查看。删除后不可恢复。<br>
+            · 目前只支持手动备份，建议每周点一次；要定时就在系统里加一个计划任务复制 <code>data/blog.db</code>。
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SSH 控制台 -->
+    <section class="view" id="view-console">
+      <div class="console-bar">
+        <span class="dot" id="cConnDot"></span>
+        <span id="cConnText">连接中…</span>
+        <span style="flex:1"></span>
+        <span>服务器：<code>VM2 · 192.168.200.12</code></span>
+        <span>提示：<code>exit</code> 退出 · <code>ssh root@192.168.200.11</code> 可跳到网关机</span>
+      </div>
+      <div class="console-holder">
+        <iframe id="consoleFrame" class="console-frame" title="SSH 控制台"></iframe>
+        <div class="console-mask" id="consoleMask">正在建立安全终端连接…</div>
+      </div>
+      <div class="tip" style="margin-top:10px;line-height:1.9">
+        终端已通过后台登录态鉴权，仅在浏览器内使用；这里的操作就是真实服务器上的操作，请谨慎执行。
+      </div>
+    </section>
+
+    <!-- 设置 -->
+    <section class="view" id="view-settings">
+      <div class="panel">
+        <div class="panel-head">修改管理密码 <span class="sp">修改后立即生效，当前登录态保持有效</span></div>
+        <div class="panel-body">
+          <form id="pwdForm" class="pwd-form" autocomplete="off">
+            <label>当前密码
+              <input type="password" id="pwdOld" placeholder="请输入当前密码" required autocomplete="current-password" />
+            </label>
+            <label>新密码
+              <input type="password" id="pwdNew" placeholder="至少 8 位" required minlength="8" autocomplete="new-password" />
+            </label>
+            <label>确认新密码
+              <input type="password" id="pwdNew2" placeholder="再输入一次新密码" required minlength="8" autocomplete="new-password" />
+            </label>
+            <div class="pwd-actions">
+              <button type="submit" class="tbtn primary">保存新密码</button>
+              <span class="pwd-msg" id="pwdMsg"></span>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head">安全提示</div>
+        <div class="panel-body">
+          <div class="tip" style="line-height:2">
+            · 密码以 scrypt 哈希保存在 <code>data/admin.json</code>，不会明文存储。<br>
+            · 登录失败超过 8 次会锁定 15 分钟；所有写操作都有同源校验与 WAF 防护。<br>
+            · 忘记密码时可在项目目录执行：<code>node tools/hash-password.js '新密码' --write</code>，再重启服务。
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<input type="file" id="coverFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+<input type="file" id="bodyFile" accept="image/png,image/jpeg,image/gif,image/webp" hidden />
+<input type="file" id="importFile" accept="application/json,.json" hidden />
+<input type="file" id="vidFile" accept="video/*,.mp4,.m4v,.webm,.mkv,.mov,.avi,.flv,.ts" multiple hidden />
+
+<div id="upMask">
+  <div class="up-card">
+    <h4 id="upTitle">正在上传</h4>
+    <div class="up-name" id="upName"></div>
+    <div class="up-bar"><div class="up-fill" id="upFill"></div></div>
+    <div class="up-meta"><span id="upPct">0%</span><span id="upSize"></span></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+  let articles = [], currentId = null, coverUrl = '', published = true;
+  let keyword = '', toastTimer, videoCount = 0;
+  let vidWritable = true, vidWriteErr = '';
+
+  function toast(msg, isErr){
+    const t=$('toast'); t.textContent=msg; t.className='show'+(isErr?' err':'');
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.className='',2600);
+  }
+  function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+  function fmt(ts){const d=new Date(ts),p=n=>String(n).padStart(2,'0');
+    return d.getFullYear()+'.'+p(d.getMonth()+1)+'.'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes())}
+  function fmtSize(b){
+    if(!b && b!==0) return '—';
+    if(b>=1073741824) return (b/1073741824).toFixed(2)+' GB';
+    if(b>=1048576) return (b/1048576).toFixed(1)+' MB';
+    if(b>=1024) return (b/1024).toFixed(0)+' KB';
+    return b+' B';
+  }
+  // 剩余时间：160 秒读作「2 分 40 秒」，比 160s 好懂
+  function fmtLeft(sec){
+    if(!isFinite(sec)||sec<=0) return '—';
+    if(sec<1) return '不到 1 秒';
+    if(sec<60) return Math.ceil(sec)+' 秒';
+    const m=Math.floor(sec/60), s=Math.round(sec%60);
+    return m+' 分'+(s?' '+s+' 秒':'');
+  }
+  // 上传进度用滑动窗口算瞬时速度：从点击开始算平均会被起步的前几百毫秒拖死
+  function makeMeter(){
+    let t0=Date.now(), lastT=t0, lastL=0, ema=0;
+    return {
+      reset(){ t0=Date.now(); lastT=t0; lastL=0; ema=0; },
+      sample(loaded){
+        const now=Date.now(), dt=(now-lastT)/1000;
+        if(dt>=0.4){
+          const inst=(loaded-lastL)/dt;
+          ema = ema ? ema*0.6+inst*0.4 : inst;
+          lastT=now; lastL=loaded;
+        }
+        // 还没采到点时，退回「已传字节 / 已用时间」，但至少按 0.4 秒折算
+        return ema || loaded/Math.max(0.4,(now-t0)/1000);
+      }
+    };
+  }
+
+  async function api(path, opts){
+    const res = await fetch(path, Object.assign({credentials:'same-origin'}, opts||{}));
+    let d={}; try{d=await res.json()}catch(e){}
+    if(res.status===401){ showLogin(); throw new Error(d.error||'登录已过期，请重新登录'); }
+    if(!res.ok) throw new Error(d.error||('请求失败 ('+res.status+')'));
+    return d;
+  }
+
+  /* ---------- 视图切换 ---------- */
+  const TITLES = {
+    overview: ['概览', '站点数据与快捷入口'],
+    articles: ['文章', '写、改、删，都在这一页'],
+    videos:  ['小影院', '上传视频，游客就能看也能发弹幕'],
+    danmaku: ['弹幕', '按视频查看、搜索、删除游客发的弹幕'],
+    db:      ['数据库', '表结构、数据浏览、备份与维护'],
+    logs:    ['日志', '登录、发布、上传、报错，按时间倒序'],
+    monitor: ['观测中心', '服务健康 / 错误追踪 / 性能趋势 / 数据库，一屏看完'],
+    arch:    ['架构图', '从你点开网页，到数据落库，一次看清整条链路'],
+    backup:  ['备份管理', '手动备份 / 下载 / 删除，异地双份留存'],
+    console: ['SSH 控制台', '浏览器里直接操作服务器，无需另外登录'],
+    settings:['设置', '修改管理密码与站点偏好']
+  };
+  let logTimer=null, mtTimer=null, bkTimer=null, LOG_AUTO=true;
+
+  function syncTimers(view){
+    clearInterval(logTimer); logTimer=null;
+    clearInterval(mtTimer);  mtTimer=null;
+    clearInterval(bkTimer);  bkTimer=null;
+    // 只给当前页开轮询，切走就停，后台别偷偷发请求
+    if(view==='logs' && LOG_AUTO) logTimer=setInterval(()=>{ if(!document.hidden) loadLogs(false,true); },4000);
+    if(view==='monitor' && OBS.auto) mtTimer=setInterval(()=>{ if(!document.hidden) loadObservability(); },6000);
+    if(view==='backup') bkTimer=setInterval(()=>{ if(!document.hidden) pollBackup(); },2000);
+  }
+
+  function go(view){
+    document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on', v.id==='view-'+view));
+    document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('on', b.dataset.view===view));
+    const t=TITLES[view]||['',''];
+    $('pageTitle').textContent=t[0]; $('pageDesc').textContent=t[1];
+    // 数据库/日志/监控都有自己的下载入口，顶部的文章 JSON 导出导入会混淆，先收起来
+    const content = view==='overview' || view==='articles';
+    $('btnExport').style.display = content?'':'none';
+    $('btnImport').style.display = content?'':'none';
+    $('btnNew').style.display = content?'':'none';
+    syncTimers(view);
+    if(view==='db') loadDb();          // 每次进来都刷新一遍，避免看到过期的行数
+    if(view==='danmaku') loadDmVideos();
+    if(view==='logs') loadLogs(true);
+    if(view==='monitor') loadObservability();
+    if(view==='arch') loadArchStatus();
+    if(view==='backup') loadBackups();
+    if(view==='console') onConsoleEnter();
+  }
+  document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.view)));
+  document.querySelectorAll('[data-go]').forEach(el=>el.addEventListener('click',()=>{
+    go(el.dataset.go);
+    if(el.dataset.new) openEditor(null);
+  }));
+
+  /* ---------- 登录态 ---------- */
+  function showLogin(){
+    $('loginView').classList.add('show'); $('app').classList.remove('show');
+  }
+  function showDash(){
+    $('loginView').classList.remove('show'); $('app').classList.add('show');
+  }
+
+  async function checkSession(){
+    try{ const d=await api('/api/session'); if(d.authed){ showDash(); await loadAll(); } else showLogin(); }
+    catch(e){ showLogin(); }
+  }
+
+  async function loadAll(){
+    await load();            // 概览的「最近文章」要用到列表，必须等它先完成
+    await loadStats();
+    await loadVideos();
+    await loadDb();
+    go('overview');
+  }
+
+  /* ---------- 文章 ---------- */
+  async function load(){
+    $('alist').innerHTML='<div class="loading">加载中…</div>';
+    try{
+      const d=await api('/api/articles/all');
+      articles=d.articles||[];
+      $('navArtCount').textContent=articles.length;
+      renderList();
+    }catch(e){ $('alist').innerHTML='<div class="empty">加载失败：'+esc(e.message)+'</div>'; }
+  }
+
+  function renderList(){
+    const list = keyword
+      ? articles.filter(a => (a.title||'').toLowerCase().includes(keyword) || (a.tag||'').toLowerCase().includes(keyword))
+      : articles;
+    $('listCount').textContent = articles.length ? (list.length + ' / ' + articles.length + ' 篇') : '';
+    if(!list.length){
+      $('alist').innerHTML = keyword
+        ? '<div class="empty">没有匹配「'+esc(keyword)+'」的文章</div>'
+        : '<div class="empty">还没有文章<br>点右上角「＋ 写新文章」开始吧</div>';
+      return;
+    }
+    $('alist').innerHTML=list.map(a=>
+      '<div class="aitem'+(a.id===currentId?' active':'')+'" data-id="'+a.id+'">'+
+        '<h4>'+esc(a.title)+'</h4>'+
+        '<div class="m">'+(a.published?'':'<span class="chip draft">草稿</span>')+
+        (a.tag?'<span class="chip">'+esc(a.tag)+'</span>':'')+
+        '<span>'+fmt(a.created)+'</span></div>'+
+      '</div>').join('');
+    $('alist').querySelectorAll('.aitem').forEach(el=>{
+      el.addEventListener('click',()=>openEditor(Number(el.dataset.id)));
+    });
+  }
+
+  $('q').addEventListener('input',e=>{ keyword=e.target.value.trim().toLowerCase(); renderList(); });
+
+  function setCover(url){
+    coverUrl=url||'';
+    $('coverPrev').innerHTML=coverUrl?'<img src="'+esc(coverUrl)+'" alt="封面预览">':'暂无封面';
+  }
+  function openEditor(id){
+    currentId=id;
+    const a=articles.find(x=>x.id===id)||{};
+    $('fTitle').value=a.title||''; $('fTag').value=a.tag||''; $('fBody').value=a.body||'';
+    setCover(a.cover||'');
+    published = a.published !== false;
+    $('fPublish').checked = published;
+    $('editorTitle').textContent=id?'编辑文章':'写新文章';
+    $('modeTag').textContent=id?('编辑 #'+id):'新建';
+    $('btnDelete').disabled=!id;
+    go('articles');
+    renderList();
+    if(id) $('fTitle').focus();
+  }
+
+  /* ---------- 概览数据 ---------- */
+  async function loadStats(){
+    try{
+      const d=await api('/api/stats');
+      $('stTotal').textContent=d.total; $('stPub').textContent=d.published;
+      $('stDraft').textContent=d.drafts; $('stViews').textContent=d.views;
+      $('stImg').textContent=fmtSize(d.uploadBytes||0);
+      $('stDm').textContent=(d.danmaku||0)+' 条';
+    }catch(e){ /* 概览失败不影响编辑 */ }
+
+    const recent = articles.slice().sort((a,b)=>b.created-a.created).slice(0,6);
+    $('recentHint').textContent = recent.length ? '按发布时间倒序' : '';
+    $('recentList').innerHTML = recent.length
+      ? recent.map(a=>'<div class="ri" data-id="'+a.id+'"><span class="t">'+esc(a.title)+'</span>'+
+          '<span class="d">'+fmt(a.created)+' · '+a.views+' 阅</span></div>').join('')
+      : '<div class="empty" style="padding:18px">还没有文章</div>';
+    $('recentList').querySelectorAll('.ri').forEach(el=>{
+      el.style.cursor='pointer';
+      el.addEventListener('click',()=>openEditor(Number(el.dataset.id)));
+    });
+  }
+
+  /* ---------- 图片压缩与上传 ---------- */
+  function compressImage(file){
+    return new Promise(resolve=>{
+      if(!/^image\/(jpeg|png|webp)$/.test(file.type) || file.size < 400*1024) return resolve(file);
+      const img=new Image();
+      const objUrl=URL.createObjectURL(file);
+      img.onload=()=>{
+        const MAX=1920;
+        const w=img.naturalWidth, h=img.naturalHeight;
+        if(Math.max(w,h)<=MAX && file.size<=1.2*1024*1024){ URL.revokeObjectURL(objUrl); return resolve(file); }
+        const scale=Math.min(1, MAX/Math.max(w,h));
+        const c=document.createElement('canvas');
+        c.width=Math.max(1,Math.round(w*scale));
+        c.height=Math.max(1,Math.round(h*scale));
+        const ctx=c.getContext('2d');
+        ctx.fillStyle='#fff'; ctx.fillRect(0,0,c.width,c.height);
+        ctx.drawImage(img,0,0,c.width,c.height);
+        URL.revokeObjectURL(objUrl);
+        c.toBlob(blob=>{
+          if(!blob || blob.size>=file.size) return resolve(file);
+          const name=file.name.replace(/\.(png|webp|jpe?g)$/i,'')+'.jpg';
+          try{ resolve(new File([blob],name,{type:'image/jpeg'})); }
+          catch(e){ blob.name=name; resolve(blob); }
+        },'image/jpeg',0.86);
+      };
+      img.onerror=()=>{ URL.revokeObjectURL(objUrl); resolve(file); };
+      img.src=objUrl;
+    });
+  }
+
+  function uploadImage(file){
+    return new Promise(async resolve=>{
+      if(!file) return resolve(null);
+      if(!/^image\/(png|jpeg|gif|webp)$/.test(file.type)){ toast('仅支持 PNG / JPG / GIF / WebP',true); return resolve(null); }
+      if(file.size>5*1024*1024){ toast('图片不能超过 5MB',true); return resolve(null); }
+
+      const mask=$('upMask'), fill=$('upFill'), pctEl=$('upPct'), sizeEl=$('upSize');
+      $('upTitle').textContent='正在处理图片…';
+      $('upName').textContent=file.name+'（原始 '+fmtSize(file.size)+'）';
+      fill.style.width='0%'; pctEl.textContent='0%'; sizeEl.textContent='';
+      mask.classList.add('show');
+
+      const original=file.size;
+      const out=await compressImage(file);
+      const shrunk=out.size<original;
+
+      $('upTitle').textContent='正在上传'+(shrunk?'（已压缩）':'');
+      if(shrunk) $('upName').textContent=file.name+'  ·  '+fmtSize(original)+' → '+fmtSize(out.size);
+
+      const fd=new FormData(); fd.append('file',out,out.name||'image');
+      const xhr=new XMLHttpRequest();
+      xhr.open('POST','/api/upload',true);
+      xhr.withCredentials=true;
+      const meter=makeMeter();
+
+      xhr.upload.onprogress=e=>{
+        if(!e.lengthComputable) return;
+        const p=Math.min(100,Math.round(e.loaded/e.total*100));
+        fill.style.width=p+'%'; pctEl.textContent=p+'%';
+        const sp=meter.sample(e.loaded);
+        const left=e.loaded<e.total?(' · 剩余 '+fmtLeft((e.total-e.loaded)/sp)):'';
+        sizeEl.textContent=fmtSize(e.loaded)+' / '+fmtSize(e.total)+' · '+fmtSize(sp)+'/s'+left;
+      };
+      xhr.onload=()=>{
+        mask.classList.remove('show');
+        let d={}; try{ d=JSON.parse(xhr.responseText); }catch(e){}
+        if(xhr.status<200||xhr.status>=300){ toast(d.error||('上传失败（'+xhr.status+'）'),true); return resolve(null); }
+        toast('✓ 上传完成  '+fmtSize(original)+(shrunk?' → '+fmtSize(out.size):''));
+        resolve(d.url);
+      };
+      xhr.onerror=()=>{ mask.classList.remove('show'); toast('网络中断，上传失败',true); resolve(null); };
+      xhr.onabort=()=>{ mask.classList.remove('show'); toast('上传已取消',true); resolve(null); };
+      xhr.send(fd);
+    });
+  }
+
+  function insertAtCursor(ta,text){
+    const s=ta.selectionStart,e=ta.selectionEnd,v=ta.value;
+    ta.value=v.slice(0,s)+text+v.slice(e);
+    ta.selectionStart=ta.selectionEnd=s+text.length; ta.focus();
+  }
+
+  /* ---------- 视频 ---------- */
+  async function loadVideos(){
+    try{
+      const res=await fetch('/api/admin/videos',{credentials:'same-origin',cache:'no-store'});
+      const d=await res.json();
+      if(!res.ok){ $('vidList').innerHTML='<div class="empty">'+esc(d.error||'读取失败')+'</div>'; return; }
+      if(d.maxMB) $('vidMax').textContent=d.maxMB;
+      $('vidDir').textContent='目录：'+(d.dir||'未配置（.env 里设置 LOCAL_VIDEO_DIR）');
+      const wb=$('vidWarn');
+      vidWritable = d.writable!==false;
+      vidWriteErr = d.writeErr||'';
+      if(d.writable===false){
+        const code=d.writeErr||'不可写';
+        let tip='在服务器上跑 <code>df -h</code> 看剩余空间，<code>sudo dmesg | tail -30</code> 看具体报错。';
+        if(/EROFS|read-only/i.test(code)) tip='文件系统被挂载成只读，通常是磁盘写满或 ext4 报错后自动切只读。先 <code>df -h</code> 看空间，再看 <code>sudo dmesg | tail -30</code>。';
+        else if(/ENOSPC|no space/i.test(code)) tip='磁盘满了。先清理 <code>journalctl --vacuum-size=100M</code>，或给虚拟机扩盘。';
+        else if(/EACCES|EPERM/i.test(code)) tip='权限不对，执行 <code>sudo chown -R blog:blog '+esc(d.dir||'')+'</code>。';
+        wb.style.display='';
+        wb.innerHTML='<span>⛔</span><div><b>视频目录写不进去（'+esc(code)+'），现在上传一定失败</b>'+
+          '路径 <code>'+esc(d.dir||'')+'</code>；'+tip+'</div>';
+      } else wb.style.display='none';
+      const vs=d.videos||[];
+      videoCount = vs.length;
+      $('navVidCount').textContent = vs.length;
+      $('vidCount').textContent = vs.length ? (vs.length+' 个 · '+fmtSize(d.totalBytes||0)) : '';
+      $('vidStat').textContent = vs.length ? ('共 '+fmtSize(d.totalBytes||0)) : '';
+      $('stVid').textContent = vs.length+' 个';
+      $('stVidSize').textContent = vs.length ? fmtSize(d.totalBytes||0) : '—';
+      if(!vs.length){
+        $('vidList').innerHTML='<div class="empty">'+esc(d.error||'还没有视频，上传一个试试～')+'</div>';
+        return;
+      }
+      $('vidList').innerHTML=vs.map((v,i)=>
+        '<div class="vrow">'+
+          '<span class="no">'+(i+1)+'</span>'+
+          '<span class="nm">'+esc(v.name)+'</span>'+
+          '<span class="mt">'+esc(fmtSize(v.size))+'</span>'+
+          '<span class="acts">'+
+            '<button class="mini" data-play="'+esc(v.name)+'">播放</button>'+
+            '<button class="mini danger" data-del="'+esc(v.name)+'">删除</button>'+
+          '</span>'+
+        '</div>'
+      ).join('');
+    }catch(e){ $('vidList').innerHTML='<div class="empty">读取失败：'+esc(e.message)+'</div>'; }
+  }
+
+  function uploadVideo(file){
+    return new Promise(resolve=>{
+      if(!file) return resolve(null);
+      if(!/\.(mp4|m4v|webm|mkv|mov|avi|flv|f4v|ts)$/i.test(file.name)){
+        toast('「'+file.name+'」格式不支持',true); return resolve(null);
+      }
+      // 目录写不进去就别开始传了，8MB 传两分钟再失败很折磨人
+      if(!vidWritable){
+        toast('视频目录不可写（'+vidWriteErr+'），先修磁盘再传',true); return resolve(null);
+      }
+      const mask=$('upMask'),fill=$('upFill'),pctEl=$('upPct'),sizeEl=$('upSize');
+      $('upTitle').textContent='正在上传视频…';
+      $('upName').textContent=file.name+'  ·  '+fmtSize(file.size);
+      fill.style.width='0%'; pctEl.textContent='0%'; sizeEl.textContent='';
+      mask.classList.add('show');
+
+      const xhr=new XMLHttpRequest();
+      xhr.open('POST','/api/admin/videos?name='+encodeURIComponent(file.name),true);
+      xhr.withCredentials=true;
+      xhr.setRequestHeader('Content-Type','application/octet-stream');
+      const meter=makeMeter();
+
+      xhr.upload.onprogress=e=>{
+        if(!e.lengthComputable) return;
+        const p=Math.min(100,Math.round(e.loaded/e.total*100));
+        fill.style.width=p+'%'; pctEl.textContent=p+'%';
+        const sp=meter.sample(e.loaded);
+        const left=e.loaded<e.total?(' · 剩余 '+fmtLeft((e.total-e.loaded)/sp)):'';
+        sizeEl.textContent=fmtSize(e.loaded)+' / '+fmtSize(e.total)+' · '+fmtSize(sp)+'/s'+left;
+      };
+      xhr.onload=()=>{
+        mask.classList.remove('show');
+        let d={}; try{ d=JSON.parse(xhr.responseText); }catch(e){}
+        if(xhr.status<200||xhr.status>=300){ toast(d.error||('上传失败（'+xhr.status+'）'),true); return resolve(null); }
+        toast('✓ 上传完成  '+d.name);
+        resolve(d.name);
+      };
+      xhr.onerror=()=>{ mask.classList.remove('show'); toast('网络中断，上传失败',true); resolve(null); };
+      xhr.onabort=()=>{ mask.classList.remove('show'); toast('上传已取消',true); resolve(null); };
+      xhr.send(file);
+    });
+  }
+
+  async function deleteVideo(name){
+    if(!confirm('确定删除视频「'+name+'」吗？\n文件会从服务器磁盘上删掉，不能恢复。')) return;
+    try{
+      const res=await fetch('/api/admin/videos?name='+encodeURIComponent(name),{method:'DELETE',credentials:'same-origin'});
+      const d=await res.json().catch(()=>({}));
+      if(!res.ok){ toast(d.error||('删除失败（'+res.status+'）'),true); return; }
+      toast('已删除 '+name);
+      await loadVideos();
+    }catch(e){ toast('删除失败：'+e.message,true); }
+  }
+
+  async function uploadVideoFiles(files){
+    if(!files||!files.length) return;
+    let ok=0;
+    for(const f of files){ if(await uploadVideo(f)) ok++; }
+    if(files.length>1) toast('✓ 完成 '+ok+' / '+files.length+' 个');
+    await loadVideos();
+  }
+
+  /* ---------- 日志 ---------- */
+  const LOG = { level:'all', kind:'all', q:'', before:0, limit:150, loaded:[] };
+
+  function hhmmss(ts){
+    const d=new Date(ts), p=n=>String(n).padStart(2,'0');
+    const now=new Date();
+    const hm=p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());
+    return d.toDateString()===now.toDateString() ? hm : (p(d.getMonth()+1)+'-'+p(d.getDate())+' '+hm);
+  }
+  function logRow(l){
+    return '<div class="lrow lv-'+l.level+'" title="'+esc(new Date(l.ts).toLocaleString())+'">'+
+      '<span class="lt">'+hhmmss(l.ts)+'</span>'+
+      '<span class="ll">'+l.level.toUpperCase()+'</span>'+
+      '<span class="lk">'+esc(l.kind)+'</span>'+
+      '<span class="lm">'+esc(l.msg)+'</span>'+
+      (l.ip?'<span class="li">'+esc(l.ip)+'</span>':'')+
+    '</div>';
+  }
+
+  async function loadLogs(reset, silent){
+    if(reset){ LOG.before=0; }
+    const qs=new URLSearchParams({level:LOG.level, kind:LOG.kind, q:LOG.q, limit:LOG.limit});
+    if(LOG.before) qs.set('before', LOG.before);
+    try{
+      const d=await api('/api/admin/logs?'+qs.toString());
+      const rows=d.logs||[];
+      $('lgTotal').textContent = (d.buffered!=null?d.buffered:rows.length);
+      $('lgWarn').textContent = d.counts?d.counts.warn:0;
+      $('lgErr').textContent = d.counts?d.counts.error:0;
+      $('navLogCount').textContent = d.counts?d.counts.error:0;
+      $('lgFile').textContent = fmtSize(d.file?d.file.size:0);
+      $('lgFilePath').textContent = d.file?String(d.file.path).split(/[\\/]/).slice(-2).join('/'):'—';
+      $('lgFilePath').title = d.file?d.file.path:'';
+      $('lgMeta').textContent = rows.length+' 条 · 缓冲上限 '+(d.bufferMax||'—');
+
+      // 类别下拉：第一次填，之后保持当前选中
+      const sel=$('lgKind');
+      if((d.kinds||[]).length && sel.options.length<=1){
+        sel.innerHTML='<option value="all">全部类别</option>'+
+          d.kinds.map(k=>'<option value="'+esc(k)+'">'+esc(k)+'</option>').join('');
+        sel.value=LOG.kind;
+      }
+
+      if(!rows.length){
+        $('logList').innerHTML='<div class="empty">'+(LOG.q||LOG.kind!=='all'||LOG.level!=='all'
+          ?'没有符合条件的日志':'还没有日志，动一动网站就会有了')+'</div>';
+        $('lgMore').disabled=true;
+        $('lgHint').textContent='';
+        return;
+      }
+      const html=rows.map(logRow).join('');
+      if(reset){
+        $('logList').innerHTML=html;
+        LOG.loaded=rows.slice();
+        $('logList').scrollTop=0;
+      }else if(!silent){
+        $('logList').insertAdjacentHTML('beforeend',html);
+        LOG.loaded=LOG.loaded.concat(rows);
+      }else{
+        // 自动刷新：只有用户还停在顶部时才整体替换，免得正看着旧日志被顶走
+        if($('logList').scrollTop<40){
+          $('logList').innerHTML=html;
+          LOG.loaded=rows.slice();
+        }
+        $('lgHint').textContent='已自动刷新 '+hhmmss(Date.now());
+        return;
+      }
+      $('lgHint').textContent='共 '+d.total+' 条匹配';
+      $('lgMore').disabled=!d.hasMore;
+    }catch(e){
+      if(!silent) $('logList').innerHTML='<div class="empty">读取失败：'+esc(e.message)+'</div>';
+    }
+  }
+
+  function bindLogs(){
+    $('lgLevel').addEventListener('click',e=>{
+      const b=e.target.closest('button[data-lv]'); if(!b) return;
+      $('lgLevel').querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+      LOG.level=b.dataset.lv; loadLogs(true);
+    });
+    $('lgKind').addEventListener('change',e=>{ LOG.kind=e.target.value; loadLogs(true); });
+    let t;
+    $('lgQ').addEventListener('input',e=>{
+      clearTimeout(t);
+      t=setTimeout(()=>{ LOG.q=e.target.value.trim(); loadLogs(true); },280);
+    });
+    $('lgReload').addEventListener('click',()=>loadLogs(true));
+    $('lgAuto').addEventListener('click',()=>{
+      LOG_AUTO=!LOG_AUTO;
+      $('lgAuto').textContent=LOG_AUTO?'⏸ 暂停自动':'▶ 开启自动';
+      syncTimers('logs');
+      toast(LOG_AUTO?'已开启自动刷新（4 秒）':'已暂停自动刷新');
+    });
+    $('lgMore').addEventListener('click',()=>{
+      const oldest=LOG.loaded[LOG.loaded.length-1];
+      if(!oldest) return;
+      LOG.before=oldest.id;
+      loadLogs(false);
+    });
+    $('lgClear').addEventListener('click',async()=>{
+      if(!confirm('清空日志？内存缓冲和 data/blog.log 都会被清掉，不能恢复。')) return;
+      try{
+        const d=await api('/api/admin/logs',{method:'DELETE'});
+        toast('已清空 '+d.removed+' 条');
+        LOG.before=0; await loadLogs(true);
+      }catch(e){ toast('清空失败：'+e.message,true); }
+    });
+  }
+
+  /* ---------- 监控 ---------- */
+  function fmtDur(s){
+    s=Math.max(0,Math.floor(s||0));
+    const d=Math.floor(s/86400), h=Math.floor(s%86400/3600), m=Math.floor(s%3600/60);
+    if(d) return d+' 天 '+h+' 小时';
+    if(h) return h+' 小时 '+m+' 分';
+    if(m) return m+' 分 '+(s%60)+' 秒';
+    return s+' 秒';
+  }
+
+  function spark(svgId, points, key, max, color){
+    const svg=$(svgId);
+    if(!points||!points.length){
+      svg.innerHTML='<text x="150" y="38" text-anchor="middle" fill="#7f729a" font-size="10">暂无数据</text>';
+      return;
+    }
+    const W=300,H=70,pad=2;
+    const n=points.length;
+    const step=n>1?(W-pad*2)/(n-1):0;
+    const mx=Math.max(0.001,max);
+    const xy=points.map((p,i)=>{
+      const v=Math.max(0,Number(p[key])||0);
+      return [pad+i*step, H-pad-Math.min(1,v/mx)*(H-pad*2)];
+    });
+    const line=xy.map(a=>a[0].toFixed(1)+','+a[1].toFixed(1)).join(' ');
+    const area=line+' '+(pad+(n-1)*step).toFixed(1)+','+(H-pad)+' '+pad+','+(H-pad);
+    svg.innerHTML=
+      '<defs><linearGradient id="g-'+svgId+'" x1="0" y1="0" x2="0" y2="1">'+
+        '<stop offset="0%" stop-color="'+color+'" stop-opacity=".34"/>'+
+        '<stop offset="100%" stop-color="'+color+'" stop-opacity="0"/>'+
+      '</linearGradient></defs>'+
+      '<line x1="'+pad+'" y1="'+(H-pad)+'" x2="'+(W-pad)+'" y2="'+(H-pad)+'" stroke="rgba(255,255,255,.1)" stroke-width="1"/>'+
+      '<polygon points="'+area+'" fill="url(#g-'+svgId+')"/>'+
+      '<polyline points="'+line+'" fill="none" stroke="'+color+'" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>'+
+      '<circle cx="'+xy[n-1][0].toFixed(1)+'" cy="'+xy[n-1][1].toFixed(1)+'" r="2.5" fill="'+color+'"/>';
+  }
+
+  /* ---------- 观测中心 ---------- */
+  const OBS = { auto:true, selected:new Set() };
+
+  function fmtAgo(ts){
+    const s=Math.max(0,Math.floor((Date.now()-ts)/1000));
+    if(s<60) return s+' 秒前';
+    if(s<3600) return Math.floor(s/60)+' 分钟前';
+    if(s<86400) return Math.floor(s/3600)+' 小时前';
+    return Math.floor(s/86400)+' 天前';
+  }
+
+  async function loadObservability(){
+    try{
+      const d=await api('/api/admin/observability');
+      const m=d.metrics||{}, r=m.req||{}, mem=m.mem||{}, c=m.cpu||{}, st=d.stats||{};
+
+      $('obsMeta').textContent='更新于 '+new Date(d.now).toLocaleTimeString()+' · '+fmtDur(m.uptime||0)+' · '+esc(m.host||'');
+      $('navBugCount').textContent=st.open||0;
+
+      // 服务健康
+      $('obsHealth').innerHTML=(d.health||[]).map(h=>
+        '<div class="health-item '+(h.ok?'ok':'bad')+'">'+
+          '<span class="dot"></span><div><div class="hn">'+esc(h.name)+'</div>'+
+          '<div class="hd">'+esc(h.detail)+'</div></div></div>').join('') || '<div class="empty">无数据</div>';
+
+      // 核心指标卡
+      $('mtUp').textContent=fmtDur(m.uptime||0);
+      $('mtBoot').textContent='启动于 '+new Date(m.bootAt).toLocaleString();
+      $('mtCpu').textContent=(c.pct||0).toFixed(1)+'%';
+      $('mtCpu').className=(c.pct>85?'c-err':c.pct>60?'c-warn':'');
+      $('mtLoad').textContent='负载 '+(c.load||[]).join(' / ')+' · '+c.cores+' 核 · 延迟 '+(c.lag||0)+'ms';
+      $('mtMem').textContent=(mem.pct||0).toFixed(1)+'%';
+      $('mtMemDetail').textContent=fmtSize(mem.used)+' / '+fmtSize(mem.total);
+      $('mtReq').textContent=(r.total||0).toLocaleString();
+      $('mtQps').textContent='约 '+(r.qps||0)+' 请求/秒 · 近1分钟 '+(r.lastMin||0)+' 次';
+      $('mtErr').textContent=(r.r5xx||0);
+      $('mtErr').className=r.r5xx>0?'c-err':'c-ok';
+      $('mtErrDetail').textContent='4xx '+(r.r4xx||0)+' · 2xx '+(r.ok||0);
+      $('mtAvg').textContent=(r.avgMs||0)+' ms';
+      $('mtMax').textContent='最慢 '+(r.maxMs||0)+' ms';
+      $('obsOpen').textContent=st.open||0;
+      $('obsBugDetail').textContent='24h 新增 '+(st.h24||0)+' · 前端 '+(st.client||0)+' / 后端 '+(st.server||0);
+      if(m.disk&&m.disk.data){
+        const dk=m.disk.data, pct=dk.total?Math.round(dk.used/dk.total*1000)/10:0;
+        $('mtDisk').textContent=pct+'%';
+        $('mtDisk').className=pct>90?'c-err':pct>80?'c-warn':'';
+        $('mtDiskDetail').textContent='可用 '+fmtSize(dk.free)+' / 共 '+fmtSize(dk.total);
+      }else{ $('mtDisk').textContent='—'; $('mtDiskDetail').textContent='不支持磁盘读取'; }
+
+      $('mtHost').textContent=(m.host||'')+' · '+(m.platform||'');
+      const db=m.db||{};
+      $('mtEnv').innerHTML=
+        esc(m.node||'')+' · PID <b>'+m.pid+'</b><br>'+
+        '数据库 <b>'+esc(db.file||'')+'（MySQL '+esc(db.sqlite||'')+' · '+fmtSize(db.size)+' · '+db.tables+' 表 / '+db.rows+' 行）</b><br>'+
+        '视频目录 <b>'+esc(m.video?.dir||'未配置')+'</b>（'+(m.video?.count||0)+' 个 · '+fmtSize(m.video?.bytes||0)+'）<br>'+
+        '日志：info '+m.logs?.info+' · warn '+m.logs?.warn+' · error '+m.logs?.error;
+
+      // 趋势图
+      spark('chartErr', d.trend||[], 'n', Math.max(1,...(d.trend||[]).map(p=>p.n)), '#ff9db4');
+      spark('chartCpu', m.history||[], 'cpu', 100, '#a78bfa');
+      spark('chartMem', m.history||[], 'mem', 100, '#f0a6d0');
+      const qmax=Math.max(1,...(m.history||[]).map(p=>p.qps));
+      spark('chartQps', m.history||[], 'qps', qmax, '#8fd9c2');
+      $('obsErrNow').textContent=(st.h24||0)+' / 24h';
+      $('obsTrendHint').textContent='Bug 近 3 小时 · 性能每 '+(m.interval||10)+' 秒采样 · '+(m.history||[]).length+' 点';
+
+      // Bug 排行
+      const groups=d.groups||[];
+      $('obsGroups').innerHTML=groups.length
+        ? groups.map(g=>'<div class="gbar" title="'+esc(g.message)+'">'+
+            '<span class="badge '+esc(g.source)+'">'+esc(g.source==='client'?'前端':'后端')+'</span>'+
+            (g.level==='fatal'?'<span class="badge fatal">致命</span>':'')+
+            '<span class="gmsg">'+esc(g.message)+'</span>'+
+            '<span class="gtime">'+esc(g.kind)+' · '+fmtAgo(g.last)+'</span>'+
+            '<span class="gnum">×'+g.count+'</span></div>').join('')
+        : '<div class="empty" style="padding:14px">还没有错误，站点很健康 ✧</div>';
+
+      // 数据库表健康
+      const tables=d.tables||[], maxB=Math.max(1,...tables.map(t=>t.bytes));
+      const totalB=tables.reduce((s,t)=>s+t.bytes,0);
+      $('obsDbHint').textContent=tables.length+' 张表 · 共 '+fmtSize(totalB);
+      $('obsTables').innerHTML=tables.map(t=>
+        '<div class="trow"><span class="tn">'+esc(t.name)+'</span>'+
+        '<span class="tb"><i style="width:'+Math.max(2,Math.round(t.bytes/maxB*100))+'%"></i></span>'+
+        '<span class="tv">'+fmtSize(t.bytes)+' · '+t.rows.toLocaleString()+' 行</span></div>').join('');
+
+      await loadErrors();
+    }catch(e){
+      $('obsMeta').textContent='读取失败：'+e.message;
+    }
+  }
+
+  const EF = { source:'all', level:'all', state:'all', q:'', qTimer:null };
+
+  async function loadErrors(){
+    try{
+      const q=new URLSearchParams({limit:'100',source:EF.source,level:EF.level,state:EF.state});
+      if(EF.q) q.set('q',EF.q);
+      const d=await api('/api/admin/errors?'+q.toString());
+      const rows=d.errors||[];
+      $('obsErrCount').textContent=rows.length+' 条'+(rows.length>=100?'（上限100）':'');
+      OBS.selected.clear();
+      $('obsErrors').innerHTML=rows.length
+        ? rows.map(e=>'<div class="erow'+(e.resolved?' resolved':'')+'" data-id="'+e.id+'">'+
+            '<div class="eh">'+
+              '<input type="checkbox" class="epick" data-id="'+e.id+'" />'+
+              '<span class="etime">'+new Date(e.ts).toLocaleString()+'</span>'+
+              '<span class="badge '+esc(e.source)+'">'+esc(e.source==='client'?'JS':'PHP')+'</span>'+
+              '<span class="k">'+esc(e.kind)+'</span>'+
+              '<span class="eflag '+(e.resolved?'done':'open')+'">'+(e.resolved?'已处理':'待处理')+'</span>'+
+              '<button class="mini edet" style="margin-left:auto">详情</button>'+
+            '</div>'+
+            '<div class="em">'+esc(e.message)+'</div>'+
+            '<div class="estack">'+esc(e.stack||'（无堆栈）')+'\n页面：'+esc(e.page||'—')+'</div>'+
+          '</div>').join('')
+        : '<div class="empty" style="padding:14px">没有符合条件的错误 ✧</div>';
+    }catch(e){
+      $('obsErrors').innerHTML='<div class="empty" style="padding:14px">读取失败：'+esc(e.message)+'</div>';
+    }
+  }
+
+  function bindObservability(){
+    $('obsRefresh').addEventListener('click',()=>loadObservability());
+    $('obsAuto').addEventListener('change',e=>{ OBS.auto=e.target.checked; syncTimers('monitor'); });
+    $('efSource').addEventListener('change',e=>{ EF.source=e.target.value; loadErrors(); });
+    $('efLevel').addEventListener('change',e=>{ EF.level=e.target.value; loadErrors(); });
+    $('efState').addEventListener('change',e=>{ EF.state=e.target.value; loadErrors(); });
+    $('efQ').addEventListener('input',e=>{
+      clearTimeout(EF.qTimer);
+      EF.qTimer=setTimeout(()=>{ EF.q=e.target.value.trim(); loadErrors(); },280);
+    });
+    $('obsErrors').addEventListener('click',async e=>{
+      const det=e.target.closest('.edet');
+      if(det){ det.closest('.erow').classList.toggle('open'); return; }
+      const pick=e.target.closest('.epick');
+      if(pick){
+        const id=Number(pick.dataset.id);
+        if(pick.checked) OBS.selected.add(id); else OBS.selected.delete(id);
+      }
+    });
+    $('efResolve').addEventListener('click',async()=>{
+      if(!OBS.selected.size){ toast('请先勾选要处理的错误',true); return; }
+      try{
+        const d=await api('/api/admin/errors/resolve',{method:'POST',body:JSON.stringify({ids:[...OBS.selected]})});
+        toast('已处理 '+d.updated+' 条'); loadObservability();
+      }catch(e){ toast('处理失败：'+e.message,true); }
+    });
+    $('efClear').addEventListener('click',async()=>{
+      if(!confirm('清空所有错误记录？这会影响 Bug 统计与排行，不能恢复。')) return;
+      try{
+        const d=await api('/api/admin/errors',{method:'DELETE'});
+        toast('已清空 '+d.removed+' 条'); loadObservability();
+      }catch(e){ toast('清空失败：'+e.message,true); }
+    });
+  }
+
+  /* ---------- 架构图：实时健康红绿灯 ---------- */
+  async function loadArchStatus(){
+    const stamp=$('archStatus');
+    // 健康项名字里含这些关键字就点亮对应节点
+    const targets=[
+      {dot:'dot-gateway', keys:['gateway','nginx','网关']},
+      {dot:'dot-ingress',  keys:['ingress']},
+      {dot:'dot-php',      keys:['php','应用','apache']},
+      {dot:'dot-mysql',    keys:['mysql','数据库']},
+      {dot:'dot-redis',    keys:['redis','缓存']}
+    ];
+    const paint=(id,ok)=>{ const el=$(id); if(el) el.setAttribute('fill', ok?'#57d9a3':'#ff6b8a'); };
+    try{
+      const d=await api('/api/admin/observability');
+      const health=d.health||[];
+      for(const t of targets){
+        const hit=health.find(h=>t.keys.some(k=>String(h.name||'').toLowerCase().includes(k)));
+        if(hit) paint(t.dot, !!hit.ok);
+      }
+      // 网关/Ingress 不在容器内健康探测范围：用一次真实的 /healthz 探测点亮
+      // 这个请求本身就要穿过 VM1 网关 → Ingress → Pod，全通才返回 200
+      let chainOk=false;
+      try{
+        const r=await fetch('/healthz',{credentials:'same-origin',cache:'no-store'});
+        chainOk=r.ok;
+      }catch(e){ chainOk=false; }
+      paint('dot-gateway', chainOk);
+      paint('dot-ingress', chainOk);
+      stamp.textContent='实时探测 '+(health.length+1)+' 项 · '+new Date().toLocaleTimeString();
+    }catch(e){
+      stamp.textContent='状态探测失败：'+e.message;
+    }
+  }
+
+  /* ---------- 备份管理 ---------- */
+  let bkBusy=false;
+  function fmtBkSize(n){ n=Number(n)||0; return n>=1048576?(n/1048576).toFixed(1)+'M':(n/1024).toFixed(0)+'K'; }
+  function fmtBkTime(sec){ const d=new Date((Number(sec)||0)*1000); return isNaN(d.getTime())?'—':d.toLocaleString('zh-CN',{hour12:false}); }
+
+  function paintBkState(st){
+    const box=$('bkState'), txt=$('bkStateText');
+    const s=(st&&st.state)||'idle';
+    box.className='bk-state'+(s==='running'?' running':s==='failed'?' failed':'');
+    txt.textContent = s==='running' ? '备份中…' : s==='done' ? '上次备份完成' : s==='failed' ? '上次失败' : '就绪';
+    box.title = (st&&st.message)||'';
+  }
+
+  async function loadBackups(){
+    try{
+      const d=await api('/api/admin/backups');
+      paintBkState(d.status);
+      bkBusy = (d.status&&d.status.state)==='running';
+      $('bkRun').disabled=bkBusy;
+      $('bkRun').textContent=bkBusy?'备份中…':'立即备份';
+      const list=d.backups||[];
+      $('bkCount').textContent='共 '+list.length+' 份 · 保存在 backups/ 目录';
+      $('bkList').innerHTML = list.length ? list.map(b=>
+        '<div class="bk-row">'+
+          '<span class="f">'+esc(b.name)+'</span>'+
+          '<span class="sz">'+fmtBkSize(b.size)+'</span>'+
+          '<span class="tm">'+fmtBkTime(b.mtime)+'</span>'+
+          '<span class="ops">'+
+            '<button data-dl="'+esc(b.name)+'">下载</button>'+
+            '<button class="del" data-del="'+esc(b.name)+'">删除</button>'+
+          '</span>'+
+        '</div>').join('') : '<div class="bk-empty">还没有备份，点右上角「立即备份」生成第一份</div>';
+      $('bkList').querySelectorAll('[data-dl]').forEach(btn=>btn.addEventListener('click',()=>{
+        location.href='/api/admin/backup/download?name='+encodeURIComponent(btn.dataset.dl);
+      }));
+      $('bkList').querySelectorAll('[data-del]').forEach(btn=>btn.addEventListener('click',async()=>{
+        if(!confirm('确定删除备份 '+btn.dataset.del+'？删除后不可恢复。')) return;
+        try{
+          await api('/api/admin/backup/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:btn.dataset.del})});
+          toast('删除请求已提交'); setTimeout(loadBackups,800);
+        }catch(e){ toast('删除失败：'+e.message); }
+      }));
+    }catch(e){
+      $('bkList').innerHTML='<div class="bk-empty">读取失败：'+esc(e.message)+'</div>';
+    }
+  }
+
+  async function pollBackup(){
+    try{
+      const st=await api('/api/admin/backup/status');
+      const prev=bkBusy;
+      paintBkState(st);
+      bkBusy=st.state==='running';
+      $('bkRun').disabled=bkBusy;
+      $('bkRun').textContent=bkBusy?'备份中…':'立即备份';
+      // 从"进行中"变为结束：刷新列表
+      if(prev && !bkBusy){ loadBackups(); toast(st.state==='done'?'备份完成':'备份失败，请查看日志'); }
+    }catch(e){ /* 轮询失败静默，避免打扰 */ }
+  }
+
+  function bindBackup(){
+    $('bkRun').addEventListener('click',async()=>{
+      if(bkBusy) return;
+      try{
+        await api('/api/admin/backup/run',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+        bkBusy=true; $('bkRun').disabled=true; $('bkRun').textContent='备份中…';
+        paintBkState({state:'running',message:'备份进行中'});
+        toast('备份任务已提交');
+      }catch(e){ toast('提交失败：'+e.message); }
+    });
+  }
+
+  /* ---------- SSH 控制台 ---------- */
+  let consoleLoaded=false;
+  function onConsoleEnter(){
+    const f=$('consoleFrame');
+    if(!consoleLoaded){
+      f.src='/console/';
+      consoleLoaded=true;
+      f.addEventListener('load',()=>{
+        $('consoleMask').style.display='none';
+        $('cConnDot').classList.remove('off');
+        $('cConnText').textContent='已连接';
+      });
+      f.addEventListener('error',()=>{
+        $('consoleMask').textContent='终端连接失败，请刷新重试';
+        $('cConnDot').classList.add('off');
+        $('cConnText').textContent='连接失败';
+      });
+    }
+  }
+
+  /* ---------- 设置：修改密码 ---------- */
+  function bindSettings(){
+    $('pwdForm').addEventListener('submit',async e=>{
+      e.preventDefault();
+      const msg=$('pwdMsg'); msg.textContent=''; msg.className='pwd-msg';
+      const oldPassword=$('pwdOld').value, newPassword=$('pwdNew').value, confirm=$('pwdNew2').value;
+      if(newPassword!==confirm){ msg.textContent='两次输入的新密码不一致'; msg.className='pwd-msg err'; return; }
+      if(newPassword.length<8){ msg.textContent='新密码至少 8 位'; msg.className='pwd-msg err'; return; }
+      try{
+        await api('/api/admin/password',{method:'POST',
+          body:JSON.stringify({oldPassword,newPassword})});
+        msg.textContent='✓ 密码已修改，请牢记新密码'; msg.className='pwd-msg ok';
+        $('pwdForm').reset();
+        toast('管理密码已更新');
+      }catch(err){ msg.textContent='修改失败：'+err.message; msg.className='pwd-msg err'; }
+    });
+  }
+
+  /* ---------- 弹幕管理 ---------- */
+  const DM = { video:'', page:1, size:50, q:'', qTimer:null };
+
+  function fmtTime(ts){
+    const d=new Date(ts), p=n=>String(n).padStart(2,'0');
+    return (d.getMonth()+1)+'-'+p(d.getDate())+' '+p(d.getHours())+':'+p(d.getMinutes());
+  }
+  // 秒数转成 m:ss，视频里弹幕的出现位置
+  function fmtSec(t){
+    t=Math.max(0,Math.floor(Number(t)||0));
+    const m=Math.floor(t/60), s=t%60;
+    return m+':'+String(s).padStart(2,'0');
+  }
+
+  async function loadDmVideos(){
+    try{
+      const d=await api('/api/admin/danmaku');
+      $('dmTotal').textContent=d.total||0;
+      $('dmVideos').textContent=(d.videos||[]).length+' 个视频';
+      $('dmVideoCount').textContent=(d.videos||[]).filter(v=>v.count>0).length;
+      $('dmOrphan').textContent='孤立弹幕 '+(d.orphan||0)+' 条';
+      $('navDmCount').textContent=d.total||0;
+      if(!d.videos||!d.videos.length){
+        $('dmVideoList').innerHTML='<div class="empty">还没有弹幕。游客在视频里发的弹幕会显示在这里～</div>';
+        return;
+      }
+      $('dmVideoList').innerHTML=d.videos.map(v=>
+        '<div class="vrow dmvrow'+(v.exists?'':' off')+'" data-video="'+esc(v.name)+'">'+
+          '<span class="nm">'+esc(v.name)+(v.exists?'':' <span style="color:#ff9db4">（视频已删）</span>')+'</span>'+
+          '<span class="cntpill">'+v.count+' 条</span>'+
+          '<span class="mt">点击看弹幕 ›</span>'+
+        '</div>'
+      ).join('');
+      $('dmVideoList').querySelectorAll('.dmvrow').forEach(el=>{
+        el.addEventListener('click',()=>openDmVideo(el.dataset.video));
+      });
+    }catch(e){
+      $('dmVideoList').innerHTML='<div class="empty">读取失败：'+esc(e.message)+'</div>';
+    }
+  }
+
+  async function openDmVideo(name, keepPage){
+    DM.video=name; DM.page=keepPage||1; DM.q='';
+    $('dmQ').value='';
+    $('dmDetailPanel').style.display='';
+    $('dmDetailTitle').textContent='《'+name+'》的弹幕';
+    await loadDmRows();
+  }
+
+  async function loadDmRows(){
+    if(!DM.video) return;
+    $('dmRows').innerHTML='<div class="loading">加载中…</div>';
+    const qs=new URLSearchParams({video:DM.video,page:DM.page,size:DM.size,q:DM.q});
+    try{
+      const d=await api('/api/admin/danmaku/rows?'+qs);
+      if(!d.rows.length){
+        $('dmRows').innerHTML='<div class="empty">'+(DM.q?'没有匹配的弹幕':'这个视频还没有弹幕')+'</div>';
+      } else {
+        $('dmRows').innerHTML=d.rows.map(r=>
+          '<div class="dmrow">'+
+            '<span class="dmT">'+fmtSec(r.t)+'</span>'+
+            '<span class="dmDot" style="background:'+esc(r.color)+'"></span>'+
+            '<span class="dmText">'+esc(r.text)+'</span>'+
+            '<span class="dmIp">'+esc(r.ip||'')+'</span>'+
+            '<span class="mt" style="font-size:10.5px">'+fmtTime(r.time)+'</span>'+
+            '<button class="mini danger" data-id="'+r.id+'" type="button">删除</button>'+
+          '</div>'
+        ).join('');
+        $('dmRows').querySelectorAll('button[data-id]').forEach(b=>{
+          b.addEventListener('click',()=>deleteDm(Number(b.dataset.id)));
+        });
+      }
+      const totalPages=Math.max(1,Math.ceil(d.total/d.size));
+      $('dmPager').innerHTML=
+        '<span>第 '+d.page+' / '+totalPages+' 页 · 共 '+d.total+' 条</span>'+
+        '<button id="dmPrev" '+(d.page<=1?'disabled':'')+'>上一页</button>'+
+        '<button id="dmNext" '+(d.hasMore?'':'disabled')+'>下一页</button>';
+      $('dmPrev').onclick=()=>{ DM.page--; loadDmRows(); };
+      $('dmNext').onclick=()=>{ DM.page++; loadDmRows(); };
+    }catch(e){
+      $('dmRows').innerHTML='<div class="empty">读取失败：'+esc(e.message)+'</div>';
+    }
+  }
+
+  async function deleteDm(id){
+    if(!confirm('确定删除这条弹幕吗？')) return;
+    try{
+      await api('/api/admin/danmaku/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
+      toast('已删除');
+      await loadDmRows();
+      await loadDmVideos();
+    }catch(e){ toast('删除失败：'+e.message,true); }
+  }
+
+  async function clearDm(video, all){
+    const what=all?'全部弹幕':'《'+video+'》的全部弹幕';
+    if(!confirm('确定清空'+what+'吗？此操作不可恢复。')) return;
+    try{
+      const payload=all?{all:true}:{video};
+      const d=await api('/api/admin/danmaku/clear',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+      toast('已清空 '+d.removed+' 条');
+      if(!all && DM.video===video){
+        DM.page=1; await loadDmRows();
+      }
+      if(all){
+        $('dmDetailPanel').style.display='none';
+        DM.video='';
+      }
+      await loadDmVideos();
+    }catch(e){ toast('清空失败：'+e.message,true); }
+  }
+
+  /* ---------- 数据库 ---------- */
+  const DB = { table:'', page:1, size:25, q:'', sort:'', dir:'desc', tables:[] };
+
+  async function loadDb(){
+    $('dbTables').innerHTML='<div class="loading">读取中…</div>';
+    try{
+      const d=await api('/api/admin/db');
+      DB.tables=d.tables||[];
+      $('dbSize').textContent=fmtSize(d.size);
+      $('dbWal').textContent=fmtSize(d.walSize);
+      $('dbTableCount').textContent=DB.tables.length+' 张';
+      $('dbRows').textContent=DB.tables.reduce((s,t)=>s+t.rows,0).toLocaleString()+' 行';
+      $('dbVer').textContent=d.sqlite?('v'+d.sqlite):'—';
+      $('dbPageSize').textContent=d.pageSize?Math.round(d.pageSize/1024)+' KB':'—';
+      $('dbPath').textContent=d.file?String(d.file).split(/[\\/]/).slice(-2).join('/'):'—';
+      $('dbPath').title=d.file||'';
+      $('navDbCount').textContent=DB.tables.length;
+      renderDbTables();
+      if(DB.table) dbBrowse(DB.table,DB.page);
+    }catch(e){ $('dbTables').innerHTML='<div class="empty">读取失败：'+esc(e.message)+'</div>'; }
+  }
+
+  function renderDbTables(){
+    if(!DB.tables.length){ $('dbTables').innerHTML='<div class="empty">库里还没有表</div>'; return; }
+    $('dbTables').innerHTML=DB.tables.map(t=>
+      '<div class="vrow">'+
+        '<span class="no">▦</span>'+
+        '<span class="nm">'+esc(t.name)+'</span>'+
+        '<span class="mt">'+t.rows+' 行 · '+t.cols+' 列</span>'+
+        '<span class="acts">'+
+          '<button class="mini" data-db="'+esc(t.name)+'">浏览</button>'+
+          '<a class="mini" href="/api/admin/db/export?type=csv&table='+encodeURIComponent(t.name)+'">CSV</a>'+
+        '</span>'+
+      '</div>'
+    ).join('');
+    $('dbTables').querySelectorAll('[data-db]').forEach(b=>b.addEventListener('click',()=>{
+      DB.q=''; DB.sort=''; DB.dir='desc'; $('dbSearch').value='';
+      dbBrowse(b.dataset.db,1);
+    }));
+  }
+
+  function dbGridHtml(cols,rows){
+    const th=cols.map(c=>'<th data-col="'+esc(c.name)+'" title="点击排序" class="'+(DB.sort===c.name?'sorted':'')+'">'+
+      esc(c.name)+' <small>'+esc(String(c.type||'').split('(')[0])+'</small></th>').join('');
+    const body=rows.length?rows.map(r=>'<tr>'+cols.map(c=>{
+      const v=r[c.name];
+      if(v===null||v===undefined) return '<td class="null">∅</td>';
+      const s=String(v), shown=s.length>140?s.slice(0,140)+'…':s;
+      return '<td class="'+(typeof v==='number'?'num':'')+'" title="'+esc(s.slice(0,500))+'">'+esc(shown)+'</td>';
+    }).join('')+'</tr>').join('')
+      :'<tr><td colspan="'+cols.length+'" class="null">没有数据</td></tr>';
+    return '<thead><tr>'+th+'</tr></thead><tbody>'+body+'</tbody>';
+  }
+
+  async function dbBrowse(table,page){
+    DB.table=table; DB.page=page||1;
+    $('dbBrowsePanel').style.display='';
+    $('dbBrowseName').textContent=table;
+    $('dbGrid').innerHTML='<tbody><tr><td class="loading">查询中…</td></tr></tbody>';
+    $('dbPager').innerHTML='';
+    const qs=new URLSearchParams({table,page:DB.page,size:DB.size,q:DB.q,sort:DB.sort,dir:DB.dir});
+    try{
+      const d=await api('/api/admin/db/rows?'+qs.toString());
+      DB.page=d.page;
+      $('dbGridMeta').textContent='共 '+d.total+' 行 · 第 '+d.page+' / '+d.pages+' 页';
+      $('dbGrid').innerHTML=dbGridHtml(d.columns,d.rows);
+      $('dbGrid').querySelectorAll('th[data-col]').forEach(h=>h.addEventListener('click',()=>{
+        const c=h.dataset.col;
+        if(DB.sort===c) DB.dir=(DB.dir==='asc'?'desc':'asc'); else { DB.sort=c; DB.dir='desc'; }
+        dbBrowse(table,1);
+      }));
+      const btn=(label,pg,off)=>'<button '+(off?'disabled':'')+' data-pg="'+pg+'">'+label+'</button>';
+      $('dbPager').innerHTML=
+        '<span style="margin-right:auto">共 '+d.total+' 行 · 每页 '+d.pageSize+' 行</span>'+
+        btn('« 首页',1,d.page<=1)+btn('‹ 上一页',d.page-1,d.page<=1)+
+        '<span>'+d.page+' / '+d.pages+'</span>'+
+        btn('下一页 ›',d.page+1,d.page>=d.pages)+btn('末页 »',d.pages,d.page>=d.pages);
+      $('dbPager').querySelectorAll('[data-pg]').forEach(b=>b.addEventListener('click',()=>dbBrowse(table,Number(b.dataset.pg))));
+    }catch(e){
+      $('dbGrid').innerHTML='<tbody><tr><td class="null">'+esc(e.message)+'</td></tr></tbody>';
+      $('dbGridMeta').textContent='';
+    }
+  }
+
+  async function dbMaintain(action,label,ask){
+    if(ask && !confirm(ask)) return;
+    try{
+      const d=await api('/api/admin/db/maintain',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action})});
+      let extra='';
+      if(action==='orphan') extra='，清掉 '+d.removed+' 条';
+      const saved=(d.before&&d.after)?(d.before.size-d.after.size):0;
+      if(saved>0) extra+='，省下 '+fmtSize(saved);
+      toast('✓ '+label+'完成'+extra);
+      await loadDb();
+    }catch(e){ toast(label+' 失败：'+e.message,true); }
+  }
+
+  async function dbRunSql(){
+    const sql=$('dbSql').value.trim();
+    if(!sql){ toast('先写一条 SQL',true); return; }
+    $('dbSqlOut').innerHTML='<div class="loading">执行中…</div>';
+    $('dbSqlMeta').textContent='';
+    try{
+      const d=await api('/api/admin/db/query',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({sql})});
+      $('dbSqlMeta').textContent=d.rowCount+' 行 · '+d.ms+' ms'+(d.truncated?' · 仅显示前 200 行':'');
+      const cols=(d.columns||[]).map(c=>({name:c,type:''}));
+      if(!cols.length){ $('dbSqlOut').innerHTML='<div class="empty">查询成功，没有数据返回</div>'; return; }
+      $('dbSqlOut').innerHTML='<table class="dbtable">'+
+        '<thead><tr>'+cols.map(c=>'<th>'+esc(c.name)+'</th>').join('')+'</tr></thead><tbody>'+
+        d.rows.map(r=>'<tr>'+cols.map(c=>{
+          const v=r[c.name];
+          if(v===null||v===undefined) return '<td class="null">∅</td>';
+          const s=String(v), shown=s.length>140?s.slice(0,140)+'…':s;
+          return '<td class="'+(typeof v==='number'?'num':'')+'" title="'+esc(s.slice(0,500))+'">'+esc(shown)+'</td>';
+        }).join('')+'</tr>').join('')+'</tbody></table>';
+    }catch(e){ $('dbSqlOut').innerHTML='<div class="empty">'+esc(e.message)+'</div>'; }
+  }
+
+  /* ---------- 事件 ---------- */
+  $('loginForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const btn=e.target.querySelector('button'); btn.disabled=true;
+    try{
+      const res=await fetch('/api/login',{method:'POST',headers:{'Content-Type':'application/json'},
+        credentials:'same-origin',body:JSON.stringify({password:$('pw').value})});
+      const d=await res.json();
+      if(!res.ok){ toast(d.error||'登录失败',true); return; }
+      $('pw').value=''; showDash(); await loadAll();
+    }catch(err){ toast('无法连接服务器：'+err.message,true); }
+    finally{ btn.disabled=false; }
+  });
+
+  $('btnLogout').addEventListener('click',async()=>{
+    try{ await fetch('/api/logout',{method:'POST',credentials:'same-origin'}); }catch(e){}
+    currentId=null; showLogin(); toast('已退出登录');
+  });
+
+  $('btnNew').addEventListener('click',()=>openEditor(null));
+
+  $('btnSave').addEventListener('click',async()=>{
+    const title=$('fTitle').value.trim();
+    if(!title){ toast('标题不能为空',true); $('fTitle').focus(); return; }
+    const body={title, tag:$('fTag').value.trim(), body:$('fBody').value,
+      cover:coverUrl, published:$('fPublish').checked};
+    const btn=$('btnSave'); btn.disabled=true;
+    try{
+      if(currentId){
+        await api('/api/articles/'+currentId,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        toast('已保存修改');
+      }else{
+        const d=await api('/api/articles',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        currentId=d.article.id; toast('已发布 🎉');
+      }
+      await load(); await loadStats();
+      openEditor(currentId);
+    }catch(e){ toast('保存失败：'+e.message,true); }
+    finally{ btn.disabled=false; }
+  });
+
+  $('btnDelete').addEventListener('click',async()=>{
+    const a=articles.find(x=>x.id===currentId);
+    if(!a) return;
+    if(!confirm('确定删除《'+a.title+'》吗？此操作不可恢复。')) return;
+    try{
+      await api('/api/articles/'+currentId,{method:'DELETE'});
+      toast('已删除'); currentId=null; await load(); await loadStats(); openEditor(null);
+    }catch(err){ toast('删除失败：'+err.message,true); }
+  });
+
+  $('btnCover').addEventListener('click',()=>$('coverFile').click());
+  $('coverFile').addEventListener('change',async e=>{
+    const f=e.target.files[0]; if(!f)return;
+    const url=await uploadImage(f); if(url) setCover(url);
+    e.target.value='';
+  });
+  $('btnCoverClear').addEventListener('click',()=>{ setCover(''); toast('已移除封面'); });
+
+  $('btnBodyImg').addEventListener('click',()=>$('bodyFile').click());
+  $('bodyFile').addEventListener('change',async e=>{
+    const f=e.target.files[0]; if(!f)return;
+    const url=await uploadImage(f);
+    if(url) insertAtCursor($('fBody'),'\n!['+f.name.replace(/\.[^.]+$/,'')+']('+url+')\n');
+    e.target.value='';
+  });
+
+  $('btnVidPick').addEventListener('click',()=>$('vidFile').click());
+  $('vidFile').addEventListener('change',async e=>{
+    const files=[...e.target.files]; e.target.value='';
+    await uploadVideoFiles(files);
+  });
+  $('btnVidRefresh').addEventListener('click',loadVideos);
+
+  // 弹幕管理
+  $('btnDmClearAll').addEventListener('click',()=>clearDm('',true));
+  $('btnDmClearOne').addEventListener('click',()=>{ if(DM.video) clearDm(DM.video,false); });
+  $('dmQ').addEventListener('input',e=>{
+    DM.q=e.target.value.trim(); DM.page=1;
+    clearTimeout(DM.qTimer);
+    DM.qTimer=setTimeout(loadDmRows,280);
+  });
+
+  (()=>{                                  // 拖拽上传
+    const drop=$('vidDrop');
+    let depth=0;
+    ['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{
+      e.preventDefault(); if(t==='dragenter') depth++; drop.classList.add('on');
+    }));
+    ['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{
+      e.preventDefault();
+      if(t==='dragleave'&&--depth>0) return;
+      if(t==='drop'){ depth=0; uploadVideoFiles([...e.dataTransfer.files]); }
+      drop.classList.remove('on');
+    }));
+  })();
+
+  $('vidList').addEventListener('click',e=>{
+    const btn=e.target.closest('button'); if(!btn) return;
+    if(btn.dataset.play) window.open('/?v='+encodeURIComponent(btn.dataset.play)+'#cinema','_blank');
+    else if(btn.dataset.del) deleteVideo(btn.dataset.del);
+  });
+
+  /* 数据库 */
+  $('dbReload').addEventListener('click',()=>{ if(DB.table) dbBrowse(DB.table,DB.page); });
+  $('dbClose').addEventListener('click',()=>{
+    DB.table=''; $('dbBrowsePanel').style.display='none';
+  });
+  let dbTimer;
+  $('dbSearch').addEventListener('input',()=>{
+    clearTimeout(dbTimer);
+    dbTimer=setTimeout(()=>{ DB.q=$('dbSearch').value.trim(); if(DB.table) dbBrowse(DB.table,1); },260);
+  });
+  $('dbVacuum').addEventListener('click',()=>dbMaintain('vacuum','压缩数据库',
+    '压缩会重写整个数据库文件，过程中需要约两倍磁盘空间。继续吗？'));
+  $('dbCheckpoint').addEventListener('click',()=>dbMaintain('checkpoint','合并 WAL'));
+  $('dbOrphan').addEventListener('click',()=>dbMaintain('orphan','清理孤立弹幕',
+    '会删除「对应视频已不存在」的弹幕，删掉不能恢复。继续吗？'));
+  $('dbRun').addEventListener('click',dbRunSql);
+  $('dbSql').addEventListener('keydown',e=>{
+    if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){ e.preventDefault(); dbRunSql(); }
+  });
+  ['dbExample','dbExample2'].forEach(id=>{
+    const b=$(id);
+    b.addEventListener('click',()=>{ $('dbSql').value=b.dataset.sql; dbRunSql(); });
+  });
+
+  /* 导出 / 导入 */
+  $('btnExport').addEventListener('click',async()=>{
+    try{
+      const d=await api('/api/export');
+      const blob=new Blob([JSON.stringify(d,null,2)],{type:'application/json'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='blog-backup-'+new Date().toISOString().slice(0,10)+'.json';
+      a.click(); URL.revokeObjectURL(a.href);
+      toast('已导出 '+d.articles.length+' 篇');
+    }catch(e){ toast('导出失败：'+e.message,true); }
+  });
+
+  $('btnImport').addEventListener('click',()=>$('importFile').click());
+  $('importFile').addEventListener('change',async e=>{
+    const f=e.target.files[0]; if(!f) return;
+    try{
+      const d=JSON.parse(await f.text());
+      if(!Array.isArray(d.articles)){ toast('备份文件格式不正确',true); return; }
+      const mode=confirm('导入 '+d.articles.length+' 篇文章。\n\n「确定」= 合并到现有\n「取消」= 替换全部');
+      const res=await api('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({mode:mode?'merge':'replace',articles:d.articles})});
+      toast('已导入 '+res.imported+' 篇');
+      await load(); await loadStats();
+    }catch(err){ toast('导入失败：'+err.message,true); }
+    finally{ e.target.value=''; }
+  });
+
+  /* 启动 */
+  bindLogs();
+  bindObservability();
+  bindSettings();
+  bindBackup();
+  checkSession();
+})();
+</script>
+<script src="/assets/watchdog.js" defer></script>
+</body>
+</html>
