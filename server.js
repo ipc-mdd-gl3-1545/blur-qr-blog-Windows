@@ -82,7 +82,10 @@ const METRIC_INTERVAL = Math.min(60, Math.max(5, envNum('METRIC_INTERVAL_SEC', 1
 const GZIP = envBool('GZIP', true);
 
 /* ---- 小影院：本地视频 + 弹幕 ---- */
-const LOCAL_VIDEO_DIR = env('LOCAL_VIDEO_DIR');                      // 本地视频目录（局域网直读，秒开不卡）
+const LOCAL_VIDEO_DIR = (() => {                                     // 本地视频目录（局域网直读，秒开不卡）
+  const raw = env('LOCAL_VIDEO_DIR');
+  return raw ? path.resolve(ROOT, raw) : path.join(ROOT, 'videos');  // 不配就用项目下的 videos/
+})();
 const MAX_VIDEO_MB = envNum('MAX_VIDEO_MB', 4096);                   // 后台单个视频上限
 const MAX_VIDEO_BYTES = Math.round(MAX_VIDEO_MB * 1024 * 1024);
 const DM_MAX_LEN = Math.min(envNum('DANMAKU_MAX_LEN', 50), 100);     // 单条弹幕字数上限
